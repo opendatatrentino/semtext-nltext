@@ -8,7 +8,7 @@ SemText NLText Converters
 
 <br/>
 
-Java libraries providing following converters:
+Java libraries providing following converters for [SemText](https://github.com/opendatatrentino/semtext):
   * NLText to SemText 
   * SemText to SemanticString  
   * SemanticString to SemText
