@@ -59,12 +59,45 @@ public final class SemanticStringConverter {
         this.urlMapper = urlMapper;
     }
 
+    /**
+     * Returns a converter which stores numerical ids as strings with no
+     * prefixes like "12345".
+     */
     public static SemanticStringConverter of() {
         return INSTANCE;
     }
 
     public static SemanticStringConverter of(UrlMapper urlMapper) {
         return new SemanticStringConverter(urlMapper);
+    }
+
+    private void addMeaning(Meaning m, double probability, List<ConceptTerm> concTerms, List<InstanceTerm> entityTerms) {
+        checkNotNull(m);
+        checkNotNull(concTerms);
+        checkNotNull(entityTerms);
+
+        if (MeaningKind.CONCEPT.equals(m.getKind())) {
+            ConceptTerm concTerm = new ConceptTerm();
+            concTerm.setValue(urlMapper.urlToConceptId(m.getId()));
+
+            concTerm.setWeight(probability);
+            concTerms.add(concTerm);
+            return;
+        }
+        if (MeaningKind.ENTITY.equals(m.getKind())) {
+            InstanceTerm entityTerm = new InstanceTerm();
+            entityTerm.setValue(urlMapper.urlToEntityId(m.getId()));
+            entityTerm.setWeight(probability);
+            entityTerms.add(entityTerm);
+            return;
+        }
+        if (MeaningKind.UNKNOWN.equals(m.getKind())) {
+            if (m.getId().length() > 0) {
+                logger.warn("Found meaning of kind UNKNOWN with non-empty id: {0}, skipping it !", m.getId());
+                return;
+            }
+        }
+        throw new IllegalArgumentException("Found not supported MeaningKind: " + m.getKind());
     }
 
     /**
@@ -79,40 +112,29 @@ public final class SemanticStringConverter {
         List<ComplexConcept> complexConcepts = new ArrayList<ComplexConcept>();
 
         for (Sentence sentence : st.getSentences()) {
-            for (Term word : sentence.getTerms()) {
+            for (Term stTerm : sentence.getTerms()) {
                 List<SemanticTerm> semTerms = new ArrayList<SemanticTerm>();
                 List<ConceptTerm> concTerms = new ArrayList<ConceptTerm>();
                 List<InstanceTerm> entityTerms = new ArrayList<InstanceTerm>();
 
                 SemanticTerm semTerm = new SemanticTerm();
 
-                for (Meaning m : word.getMeanings()) {
-                    double probability;
-                    if (MeaningStatus.SELECTED.equals(word.getMeaningStatus())) {
-                        probability = 5.0; // so we're sure selected meaning gets the highest weight
-                    } else {
-                        probability = m.getProbability();
-                    }
-                    if (MeaningKind.CONCEPT.equals(m.getKind())) {
-                        ConceptTerm concTerm = new ConceptTerm();
-                        concTerm.setValue(urlMapper.urlToConceptId(m.getId()));
-
-                        concTerm.setWeight(probability);
-                        concTerms.add(concTerm);
-                        continue;
-                    }
-                    if (MeaningKind.ENTITY.equals(m.getKind())) {
-                        InstanceTerm entityTerm = new InstanceTerm();
-                        entityTerm.setValue(urlMapper.urlToEntityId(m.getId()));
-                        entityTerm.setWeight(probability);
-                        entityTerms.add(entityTerm);
-                        continue;
-                    }
-                    throw new RuntimeException("Found not supported MeaningKind: " + m.getKind());
+                if (MeaningStatus.SELECTED.equals(stTerm.getMeaningStatus())
+                        || MeaningStatus.REVIEWED.equals(stTerm.getMeaningStatus())) {
+                    // super high prob so we're sure selected meaning gets the highest weight
+                    addMeaning(stTerm.getSelectedMeaning(), 5.0, concTerms, entityTerms);
                 }
 
-                semTerm.setOffset(word.getStart());
-                semTerm.setText(st.getText(word));
+                for (Meaning m : stTerm.getMeanings()) {
+                    Meaning selMeaning = stTerm.getSelectedMeaning();
+                    if (selMeaning != null
+                            && !m.getId().equals(selMeaning.getId())) {
+                        addMeaning(m, m.getProbability(), concTerms, entityTerms);
+                    }
+                }
+
+                semTerm.setOffset(stTerm.getStart());
+                semTerm.setText(st.getText(stTerm));
                 semTerm.setConceptTerms(concTerms);
                 semTerm.setInstanceTerms(entityTerms);
 

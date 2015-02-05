@@ -58,11 +58,19 @@ public final class UrlMapper {
         return OdtUtils.parseNumericalId(entityPrefix, URL);
     }
 
+    /** 
+     * Returns the entity id as an url
+     * @param ID must not be null.
+     */
     public String entityIdToUrl(Long ID) {
         checkNotNull(ID);
         return entityPrefix + ID;
     }
 
+    /** 
+     * Returns the concept id as an url
+     * @param ID must not be null.
+     */    
     public String conceptIdToUrl(Long ID) {
         checkNotNull(ID);
         return conceptPrefix + ID;

@@ -260,10 +260,10 @@ public class SemanticStringConverterTest {
 
         SemanticString ss = conv.semanticString(st);
 
-        assertEquals(ss.getText(), text);
-        assertEquals(ss.getComplexConcepts().size(), 1);
-        assertEquals(ss.getComplexConcepts().get(0).getTerms().size(), 1);
-        assertEquals(ss.getComplexConcepts().get(0).getTerms().get(0).getConceptTerms().size(), 1);
+        assertEquals(text, ss.getText());
+        assertEquals(1, ss.getComplexConcepts().size());
+        assertEquals( 1, ss.getComplexConcepts().get(0).getTerms().size());
+        assertEquals(1, ss.getComplexConcepts().get(0).getTerms().get(0).getConceptTerms().size());
         assertEquals((long) ss.getComplexConcepts().get(0).getTerms().get(0).getConceptTerms().get(0).getValue(),
                 concID);
     }

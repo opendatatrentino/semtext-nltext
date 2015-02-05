@@ -25,6 +25,7 @@ import eu.trentorise.opendata.semantics.nlp.model.MeaningKind;
 import eu.trentorise.opendata.semantics.nlp.model.Meaning;
 import eu.trentorise.opendata.semantics.nlp.model.SemText;
 import eu.trentorise.opendata.semantics.nlp.model.Term;
+import it.unitn.disi.sweb.core.nlp.model.NLMultiWord;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -37,6 +38,7 @@ public class NLTextConverterTest {
 
     static final long TEST_CONCEPT_1_ID = 1L;
     static final long TEST_CONCEPT_2_ID = 2L;
+    static final long TEST_CONCEPT_3_ID = 3L;
 
     private NLTextConverter conv;    
     
@@ -64,7 +66,7 @@ public class NLTextConverterTest {
 
         SemText st = conv.semText(nlText);
         assertEquals(st.getText(), nlText.getText());
-        assertEquals(st.getLocale(), Locale.ROOT);        
+        assertEquals(Locale.ROOT, st.getLocale());
     }
 
     /**
@@ -73,7 +75,7 @@ public class NLTextConverterTest {
     @Test
     public void testNLTextToSemText_2() {
 
-        String text = "hello dear Refine";
+        String text = "hello dear Trento";
 
         NLText nltext = new NLText(text);
         NLSentence sentence = new NLSentence(text);
@@ -94,23 +96,31 @@ public class NLTextConverterTest {
         sm2.setScore(5);
         sm2.setProbability((float) (5.0 / 6.0));
         meanings.add(sm2);
+                
 
         NLToken firstToken = new NLToken(dearTerm, meanings);
         firstToken.setProp(NLTextUnit.PFX, "sentenceStartOffset", 6);
         firstToken.setProp(NLTextUnit.PFX, "sentenceEndOffset", 10);
 
+        
+        NLSenseMeaning nlSelectedMeaning = new NLSenseMeaning("testLemma3", 6L, "NOUN", TEST_CONCEPT_3_ID, 4, 1, "test description");
+        nlSelectedMeaning.setScore(5);
+        nlSelectedMeaning.setProbability((float) (5.0 / 6.0));        
+        
+        firstToken.setSelectedMeaning(nlSelectedMeaning);
+        
         sentence.addToken(firstToken);
         nltext.addSentence(sentence);
 
         SemText st = conv.semText(nltext);
         
 
-        assertEquals(st.getText(), text);
-        assertEquals(st.getSentences().size(), 1);
-        assertEquals(st.getSentences().get(0).getTerms().size(), 1);
+        assertEquals(text, st.getText());
+        assertEquals(1, st.getSentences().size());
+        assertEquals(1, st.getSentences().get(0).getTerms().size());
         Term term = st.getSentences().get(0).getTerms().get(0);
-        assertEquals(term.getMeanings().size(), 2);
-        assertEquals(conv.getUrlMapper().conceptIdToUrl(TEST_CONCEPT_2_ID), term.getSelectedMeaning().getId());
+        assertEquals(2, term.getMeanings().size());
+        assertEquals(conv.getUrlMapper().conceptIdToUrl(TEST_CONCEPT_3_ID), term.getSelectedMeaning().getId());
 
     }
 
@@ -120,7 +130,7 @@ public class NLTextConverterTest {
     @Test
     public void testNLTextToSemTextNoMeaning() {
 
-        String text = "hello dear Refine";
+        String text = "hello dear Trento";
 
         NLText nltext = new NLText(text);
         NLSentence sentence = new NLSentence(text);
@@ -144,17 +154,17 @@ public class NLTextConverterTest {
         sentence.addToken(firstToken);
         nltext.addSentence(sentence);
 
-        SemText st = conv.semText(nltext);        
+        SemText st = conv.semText(nltext);
 
         assertEquals(st.getText(), text);
         assertEquals(st.getSentences().size(), 1);
         assertEquals(st.getSentences().get(0).getTerms().size(), 1);
         Term word = st.getSentences().get(0).getTerms().get(0);
-        assertEquals(1, word.getMeanings().size());
+        assertEquals(1, word.getMeanings().size());        
         assertNull(word.getSelectedMeaning());
         Meaning m = word.getMeanings().get(0);
         assertEquals("", m.getId());
-        assertEquals(m.getKind(), MeaningKind.CONCEPT);
+        assertEquals(MeaningKind.CONCEPT, m.getKind());
     }
 
     /**
@@ -201,12 +211,13 @@ public class NLTextConverterTest {
 
         SemText st = conv.semText(nltext);        
 
-        assertEquals(st.getText(), text);
-        assertEquals(st.getSentences().size(), 1);
-        assertEquals(st.getSentences().get(0).getTerms().size(), 1);
+        assertEquals(text, st.getText() );
+        assertEquals(1, st.getSentences().size());
+        assertEquals(1, st.getSentences().get(0).getTerms().size());
         Term term = st.getSentences().get(0).getTerms().get(0);
-        assertEquals(term.getMeanings().size(), 2);
-        assertEquals(conv.getUrlMapper().conceptIdToUrl(TEST_CONCEPT_2_ID), term.getSelectedMeaning().getId());
+        assertEquals(2, term.getMeanings().size());
+        
+        assertEquals(null, term.getSelectedMeaning());        
     }
 
     /**
@@ -260,7 +271,7 @@ public class NLTextConverterTest {
         toksMwString_1.add(text_1);
         toksMwString_1.add(text_2);
 
-        sentence.addMultiTerm(new NLMultiTerm("abc", toksMw_1, toksMwString_1));
+        sentence.addMultiWord(new NLMultiWord("abc", toksMw_1, toksMwString_1));
 
         NLToken thirdToken = new NLToken(text_3, meanings);
         firstToken.setProp(NLTextUnit.PFX, "sentenceStartOffset", 2);
@@ -274,9 +285,11 @@ public class NLTextConverterTest {
         toksMwString_1.add(text_2);
         toksMwString_1.add(text_3);
 
-        sentence.addMultiTerm(new NLMultiTerm("bcd", toksMw_2, toksMwString_2));
+        sentence.addMultiWord(new NLMultiWord("bcd", toksMw_2, toksMwString_2));
+        
+                
         // todo use NLNamedEntity, discuss with Gabor, Simon why NLNamedEntity 
-        // constructor is different than ones for NLMultiTerm
+        // constructor is different than ones for NLMultiWord
 
         sentence.addToken(thirdToken);
 
@@ -284,13 +297,13 @@ public class NLTextConverterTest {
 
         SemText st = conv.semText(nltext);        
 
-        assertEquals(st.getText(), text);
-        assertEquals(st.getSentences().size(), 1);
-        assertEquals(st.getSentences().get(0).getTerms().size(), 1);
+        assertEquals(text, st.getText());
+        assertEquals(1, st.getSentences().size() );
+        assertEquals(1, st.getSentences().get(0).getTerms().size());
         Term term = st.getSentences().get(0).getTerms().get(0);
 
-        assertEquals(term.getMeanings().size(), 2);
-        assertEquals(conv.getUrlMapper().conceptIdToUrl(TEST_CONCEPT_2_ID), term.getSelectedMeaning().getId());
+        assertEquals(2, term.getMeanings().size());
+        assertEquals(null, term.getSelectedMeaning());
     }
 
     
