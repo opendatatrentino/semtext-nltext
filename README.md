@@ -15,7 +15,7 @@ Java libraries providing following converters for [SemText](https://github.com/o
 
 **Project status**: developing [milestone 0.5](https://github.com/opendatatrentino/semtext-nltext/issues?milestone=1&state=open) 
 
-**Usage**: see [the wiki](https://github.com/opendatatrentino/semtext-model/wiki)
+**Usage**: see [the wiki](https://github.com/opendatatrentino/semtext/wiki)
 
 
 **Features**:
