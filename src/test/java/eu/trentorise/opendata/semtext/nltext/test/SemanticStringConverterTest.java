@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package eu.trentorise.opendata.semantics.nlp.converters.test;
+package eu.trentorise.opendata.semtext.nltext.test;
 
 import eu.trentorise.opendata.commons.OdtConfig;
-import eu.trentorise.opendata.semantics.nlp.converters.SemanticStringConverter;
-import eu.trentorise.opendata.semantics.nlp.converters.UrlMapper;
-import eu.trentorise.opendata.semantics.nlp.model.Meaning;
-import eu.trentorise.opendata.semantics.nlp.model.MeaningKind;
-import eu.trentorise.opendata.semantics.nlp.model.MeaningStatus;
-import eu.trentorise.opendata.semantics.nlp.model.SemText;
-import eu.trentorise.opendata.semantics.nlp.model.Sentence;
-import eu.trentorise.opendata.semantics.nlp.model.Term;
+import eu.trentorise.opendata.semtext.nltext.SemanticStringConverter;
+import eu.trentorise.opendata.semtext.nltext.UrlMapper;
+import eu.trentorise.opendata.semantics.semtext.Meaning;
+import eu.trentorise.opendata.semantics.semtext.MeaningKind;
+import eu.trentorise.opendata.semantics.semtext.MeaningStatus;
+import eu.trentorise.opendata.semantics.semtext.SemText;
+import eu.trentorise.opendata.semantics.semtext.Sentence;
+import eu.trentorise.opendata.semantics.semtext.Term;
 import it.unitn.disi.sweb.webapi.model.eb.sstring.ComplexConcept;
 import it.unitn.disi.sweb.webapi.model.eb.sstring.ConceptTerm;
 import it.unitn.disi.sweb.webapi.model.eb.sstring.InstanceTerm;

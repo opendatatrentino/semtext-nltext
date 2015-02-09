@@ -1,4 +1,4 @@
-package eu.trentorise.opendata.semantics.nlp.converters;
+package eu.trentorise.opendata.semtext.nltext;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.common.collect.ImmutableList;
@@ -24,12 +24,12 @@ import java.util.TreeSet;
 
 import javax.annotation.Nullable;
 
-import eu.trentorise.opendata.semantics.nlp.model.MeaningKind;
-import eu.trentorise.opendata.semantics.nlp.model.MeaningStatus;
-import eu.trentorise.opendata.semantics.nlp.model.Meaning;
-import eu.trentorise.opendata.semantics.nlp.model.SemText;
-import eu.trentorise.opendata.semantics.nlp.model.Sentence;
-import eu.trentorise.opendata.semantics.nlp.model.Term;
+import eu.trentorise.opendata.semantics.semtext.MeaningKind;
+import eu.trentorise.opendata.semantics.semtext.MeaningStatus;
+import eu.trentorise.opendata.semantics.semtext.Meaning;
+import eu.trentorise.opendata.semantics.semtext.SemText;
+import eu.trentorise.opendata.semantics.semtext.Sentence;
+import eu.trentorise.opendata.semantics.semtext.Term;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.ParametersAreNonnullByDefault;

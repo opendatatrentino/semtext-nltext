@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package eu.trentorise.opendata.semantics.nlp.converters;
+package eu.trentorise.opendata.semtext.nltext;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import eu.trentorise.opendata.semantics.nlp.model.Meaning;
-import eu.trentorise.opendata.semantics.nlp.model.MeaningKind;
-import eu.trentorise.opendata.semantics.nlp.model.MeaningStatus;
-import eu.trentorise.opendata.semantics.nlp.model.SemText;
-import eu.trentorise.opendata.semantics.nlp.model.SemTexts;
-import eu.trentorise.opendata.semantics.nlp.model.Sentence;
-import eu.trentorise.opendata.semantics.nlp.model.Term;
+import eu.trentorise.opendata.semantics.semtext.Meaning;
+import eu.trentorise.opendata.semantics.semtext.MeaningKind;
+import eu.trentorise.opendata.semantics.semtext.MeaningStatus;
+import eu.trentorise.opendata.semantics.semtext.SemText;
+import eu.trentorise.opendata.semantics.semtext.SemTexts;
+import eu.trentorise.opendata.semantics.semtext.Sentence;
+import eu.trentorise.opendata.semantics.semtext.Term;
 import it.unitn.disi.sweb.webapi.model.eb.sstring.ComplexConcept;
 import it.unitn.disi.sweb.webapi.model.eb.sstring.ConceptTerm;
 import it.unitn.disi.sweb.webapi.model.eb.sstring.InstanceTerm;

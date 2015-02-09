@@ -1,8 +1,8 @@
-package eu.trentorise.opendata.semantics.nlp.converters.test;
+package eu.trentorise.opendata.semtext.nltext.test;
 
 import eu.trentorise.opendata.commons.OdtConfig;
-import eu.trentorise.opendata.semantics.nlp.converters.NLTextConverter;
-import eu.trentorise.opendata.semantics.nlp.converters.UrlMapper;
+import eu.trentorise.opendata.semtext.nltext.NLTextConverter;
+import eu.trentorise.opendata.semtext.nltext.UrlMapper;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import it.unitn.disi.sweb.core.nlp.model.NLMeaning;
@@ -21,10 +21,10 @@ import java.util.Set;
 
 import org.junit.Test;
 
-import eu.trentorise.opendata.semantics.nlp.model.MeaningKind;
-import eu.trentorise.opendata.semantics.nlp.model.Meaning;
-import eu.trentorise.opendata.semantics.nlp.model.SemText;
-import eu.trentorise.opendata.semantics.nlp.model.Term;
+import eu.trentorise.opendata.semantics.semtext.MeaningKind;
+import eu.trentorise.opendata.semantics.semtext.Meaning;
+import eu.trentorise.opendata.semantics.semtext.SemText;
+import eu.trentorise.opendata.semantics.semtext.Term;
 import it.unitn.disi.sweb.core.nlp.model.NLMultiWord;
 import org.junit.After;
 import org.junit.Before;

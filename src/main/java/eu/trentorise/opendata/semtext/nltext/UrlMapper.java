@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package eu.trentorise.opendata.semantics.nlp.converters;
+package eu.trentorise.opendata.semtext.nltext;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import eu.trentorise.opendata.commons.OdtUtils;
