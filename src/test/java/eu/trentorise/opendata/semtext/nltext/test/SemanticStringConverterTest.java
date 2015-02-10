@@ -15,15 +15,16 @@
  */
 package eu.trentorise.opendata.semtext.nltext.test;
 
+import com.google.common.collect.Lists;
 import eu.trentorise.opendata.commons.OdtConfig;
 import eu.trentorise.opendata.semtext.nltext.SemanticStringConverter;
 import eu.trentorise.opendata.semtext.nltext.UrlMapper;
-import eu.trentorise.opendata.semantics.semtext.Meaning;
-import eu.trentorise.opendata.semantics.semtext.MeaningKind;
-import eu.trentorise.opendata.semantics.semtext.MeaningStatus;
-import eu.trentorise.opendata.semantics.semtext.SemText;
-import eu.trentorise.opendata.semantics.semtext.Sentence;
-import eu.trentorise.opendata.semantics.semtext.Term;
+import eu.trentorise.opendata.semtext.Meaning;
+import eu.trentorise.opendata.semtext.MeaningKind;
+import eu.trentorise.opendata.semtext.MeaningStatus;
+import eu.trentorise.opendata.semtext.SemText;
+import eu.trentorise.opendata.semtext.Sentence;
+import eu.trentorise.opendata.semtext.Term;
 import it.unitn.disi.sweb.webapi.model.eb.sstring.ComplexConcept;
 import it.unitn.disi.sweb.webapi.model.eb.sstring.ConceptTerm;
 import it.unitn.disi.sweb.webapi.model.eb.sstring.InstanceTerm;
@@ -65,6 +66,18 @@ public class SemanticStringConverterTest {
         conv = null;
     }
 
+    @Test
+    public void exampleUsage(){
+       SemanticStringConverter conv = SemanticStringConverter.of(
+               UrlMapper.of("http://mysite.org/entities/", 
+                            "http://mysite.org/concepts/")); 
+                // when creating semtext, string ids will have these prefixes 
+                // followed by the numerical ids of found in semantic strings
+        
+       SemText semtext = conv.semText(new SemanticString("ciao"));
+       SemanticString semstring = conv.semanticString(SemText.of("ciao"));
+    }
+    
     @Test
     public void testSemanticStringToSemText_0() {
         SemanticString ss = new SemanticString();
@@ -131,7 +144,7 @@ public class SemanticStringConverterTest {
         List<SemanticTerm> sts = new ArrayList<SemanticTerm>();
         sts.add(new SemanticTerm("dear", 6));
         ccs.add(new ComplexConcept(sts));
-        SemanticString ss = new SemanticString("hello dear Refine", ccs);
+        SemanticString ss = new SemanticString("hello dear world", ccs);
         SemText st = conv.semText(ss);
         assertEquals(st.getText(), ss.getText());
         assertEquals(st.getSentences().size(), 1);
@@ -150,7 +163,7 @@ public class SemanticStringConverterTest {
 
         sts.add(new SemanticTerm("dear", 6, concTerms, stringTerms, entityTerms));
         ccs.add(new ComplexConcept(sts));
-        SemanticString ss = new SemanticString("hello dear Refine", ccs);
+        SemanticString ss = new SemanticString("hello dear world", ccs);
         SemText st = conv.semText(ss);
         assertEquals(st.getText(), ss.getText());
         assertEquals(st.getSentences().size(), 1);
@@ -173,7 +186,7 @@ public class SemanticStringConverterTest {
 
         sts.add(new SemanticTerm("dear", 6, concTerms, stringTerms, entityTerms));
         ccs.add(new ComplexConcept(sts));
-        SemanticString ss = new SemanticString("hello dear Refine", ccs);
+        SemanticString ss = new SemanticString("hello dear world", ccs);
         SemText st = conv.semText(ss);
         assertEquals(st.getText(), ss.getText());
         assertEquals(st.getSentences().size(), 1);
@@ -202,7 +215,7 @@ public class SemanticStringConverterTest {
 
         sts.add(new SemanticTerm("dear", 6, concTerms, stringTerms, entityTerms));
         ccs.add(new ComplexConcept(sts));
-        SemanticString ss = new SemanticString("hello dear Refine", ccs);
+        SemanticString ss = new SemanticString("hello dear world", ccs);
         SemText st = conv.semText(ss);
 
         assertEquals(st.getText(), ss.getText());
@@ -245,7 +258,7 @@ public class SemanticStringConverterTest {
     @Test
     public void testSemTextToSemanticString_4() {
         long concID = 4;
-        String text = "hello dear Refine";
+        String text = "hello dear world";
         List<Sentence> sentences = new ArrayList<Sentence>();
 
         sentences.add(Sentence.of(0, text.length(),

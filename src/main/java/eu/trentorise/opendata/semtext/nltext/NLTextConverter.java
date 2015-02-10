@@ -24,12 +24,12 @@ import java.util.TreeSet;
 
 import javax.annotation.Nullable;
 
-import eu.trentorise.opendata.semantics.semtext.MeaningKind;
-import eu.trentorise.opendata.semantics.semtext.MeaningStatus;
-import eu.trentorise.opendata.semantics.semtext.Meaning;
-import eu.trentorise.opendata.semantics.semtext.SemText;
-import eu.trentorise.opendata.semantics.semtext.Sentence;
-import eu.trentorise.opendata.semantics.semtext.Term;
+import eu.trentorise.opendata.semtext.MeaningKind;
+import eu.trentorise.opendata.semtext.MeaningStatus;
+import eu.trentorise.opendata.semtext.Meaning;
+import eu.trentorise.opendata.semtext.SemText;
+import eu.trentorise.opendata.semtext.Sentence;
+import eu.trentorise.opendata.semtext.Term;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.ParametersAreNonnullByDefault;

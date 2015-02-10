@@ -16,13 +16,13 @@
 package eu.trentorise.opendata.semtext.nltext;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import eu.trentorise.opendata.semantics.semtext.Meaning;
-import eu.trentorise.opendata.semantics.semtext.MeaningKind;
-import eu.trentorise.opendata.semantics.semtext.MeaningStatus;
-import eu.trentorise.opendata.semantics.semtext.SemText;
-import eu.trentorise.opendata.semantics.semtext.SemTexts;
-import eu.trentorise.opendata.semantics.semtext.Sentence;
-import eu.trentorise.opendata.semantics.semtext.Term;
+import eu.trentorise.opendata.semtext.Meaning;
+import eu.trentorise.opendata.semtext.MeaningKind;
+import eu.trentorise.opendata.semtext.MeaningStatus;
+import eu.trentorise.opendata.semtext.SemText;
+import eu.trentorise.opendata.semtext.SemTexts;
+import eu.trentorise.opendata.semtext.Sentence;
+import eu.trentorise.opendata.semtext.Term;
 import it.unitn.disi.sweb.webapi.model.eb.sstring.ComplexConcept;
 import it.unitn.disi.sweb.webapi.model.eb.sstring.ConceptTerm;
 import it.unitn.disi.sweb.webapi.model.eb.sstring.InstanceTerm;

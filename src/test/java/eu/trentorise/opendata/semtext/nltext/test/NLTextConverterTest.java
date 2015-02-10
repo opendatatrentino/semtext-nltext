@@ -21,10 +21,10 @@ import java.util.Set;
 
 import org.junit.Test;
 
-import eu.trentorise.opendata.semantics.semtext.MeaningKind;
-import eu.trentorise.opendata.semantics.semtext.Meaning;
-import eu.trentorise.opendata.semantics.semtext.SemText;
-import eu.trentorise.opendata.semantics.semtext.Term;
+import eu.trentorise.opendata.semtext.MeaningKind;
+import eu.trentorise.opendata.semtext.Meaning;
+import eu.trentorise.opendata.semtext.SemText;
+import eu.trentorise.opendata.semtext.Term;
 import it.unitn.disi.sweb.core.nlp.model.NLMultiWord;
 import org.junit.After;
 import org.junit.Before;
@@ -306,6 +306,16 @@ public class NLTextConverterTest {
         assertEquals(null, term.getSelectedMeaning());
     }
 
-    
+
+        @Test
+    public void exampleUsage(){
+       NLTextConverter conv = NLTextConverter.of(
+               UrlMapper.of("http://mysite.org/entities/", 
+                            "http://mysite.org/concepts/")); 
+                // when creating semtext, string ids will have these prefixes 
+                // followed by the numerical ids of found in nltexts
+        
+       SemText semtext = conv.semText(new NLText("ciao"));       
+    }
 
 }
