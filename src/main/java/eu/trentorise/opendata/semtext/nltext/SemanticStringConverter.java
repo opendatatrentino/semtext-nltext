@@ -242,7 +242,7 @@ public final class SemanticStringConverter {
 
         sentences.add(Sentence.of(0, text.length(), words));
 
-        return SemText.ofSentences(text, Locale.ROOT, sentences);
+        return SemText.ofSentences(Locale.ROOT, text,  sentences);
     }
 
     public UrlMapper getUrlMapper() {

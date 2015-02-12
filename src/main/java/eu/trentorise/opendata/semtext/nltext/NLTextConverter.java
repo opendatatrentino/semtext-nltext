@@ -43,8 +43,8 @@ import javax.annotation.concurrent.Immutable;
  */
 @ParametersAreNonnullByDefault
 @Immutable
-public final class NLTextConverter {
-
+public final class NLTextConverter {    
+    
     private static final Logger logger = Logger.getLogger(NLTextConverter.class.getName());
 
     private static final NLTextConverter INSTANCE = new NLTextConverter(UrlMapper.of("", ""));
@@ -72,10 +72,19 @@ public final class NLTextConverter {
     }
 
     /**
-     * TODO - it always return the lemma in English!!!
+     * Currently it always return the lemma(s) with unknown locale.
      */
     public static Dict dict(NLMeaning meaning) {
-        logger.warning("TODO - RETURNING MEANING LEMMA WITH UNKNOWN LOCALE!");
+        logger.warning("TODO - RETURNING MEANING LEMMA(S) WITH UNKNOWN LOCALE!");
+        
+        Object lemmasProp = meaning.getProp(NLTextUnit.PFX, "synonymousLemmas");
+        if (lemmasProp != null){
+            List<String> lemmas = (List<String>) meaning.getProp(NLTextUnit.PFX, "synonymousLemmas");            
+            if (lemmas.size() > 0){
+                return Dict.of(lemmas);
+            }
+        }
+        
         return Dict.of(meaning.getLemma());
     }
 
@@ -285,7 +294,7 @@ public final class NLTextConverter {
             locale = new Locale(lang);
         }
 
-        return SemText.ofSentences(nltext.getText(), locale, sentences);
+        return SemText.ofSentences(locale, nltext.getText(),  sentences);
     }
 
     /**
@@ -310,7 +319,7 @@ public final class NLTextConverter {
             }
         } else {
             throw new IllegalArgumentException("Found an unsupported meaning type: " + nlMeaning.getClass().getName());
-        }
+        }        
         return Meaning.of(url, kind, nlMeaning.getProbability(), dict(nlMeaning));
     }
 

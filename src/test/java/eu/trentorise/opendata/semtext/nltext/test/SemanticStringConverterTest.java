@@ -249,7 +249,7 @@ public class SemanticStringConverterTest {
     public void testSemTextToSemanticString_3() {
         List<Sentence> sentences = new ArrayList<Sentence>();
         sentences.add(Sentence.of(0, 4));
-        SemText st = SemText.ofSentences("ciao", Locale.ITALIAN, sentences);
+        SemText st = SemText.ofSentences(Locale.ITALIAN, "ciao", sentences);
         SemanticString ss = conv.semanticString(st);
         assertEquals(ss.getText(), "ciao");
         assertEquals(ss.getComplexConcepts().size(), 0);
@@ -269,7 +269,7 @@ public class SemanticStringConverterTest {
                                 MeaningKind.CONCEPT,
                                 0.3))));
 
-        SemText st = SemText.ofSentences(text, Locale.ITALIAN, sentences);
+        SemText st = SemText.ofSentences(Locale.ITALIAN, text, sentences);
 
         SemanticString ss = conv.semanticString(st);
 
