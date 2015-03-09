@@ -1,6 +1,0 @@
-<p class="jadoc-to-strip">
-WARNING: WORK IN PROGRESS - THIS IS ONLY A TEMPLATE FOR THE DOCUMENTATION. <br/>
-RELEASE DOCS ARE ON THE PROJECT WEBSITE
-</p>
-
-Welcome to SemText NLText website!

@@ -3,13 +3,13 @@ WARNING: WORK IN PROGRESS - THIS IS ONLY A TEMPLATE FOR THE DOCUMENTATION. <br/>
 RELEASE DOCS ARE ON THE PROJECT WEBSITE
 </p>
 
-Currently, we support the following conversions:
+This release supports the following conversions:
 
   * NLText to SemText 
   * SemText to SemanticString  
   * SemanticString to SemText
 
-#### Maven
+### Maven
 
 SemText NLText is available on Maven Central. To use it, put this in the dependencies section of your _pom.xml_:
 
@@ -21,9 +21,9 @@ SemText NLText is available on Maven Central. To use it, put this in the depende
 </dependency>
 ```
 
-#### Usage Examples
+### Usage Examples
 
-##### NLText
+#### NLText
 
 ```
        NLTextConverter conv = NLTextConverter.of(
@@ -35,7 +35,7 @@ SemText NLText is available on Maven Central. To use it, put this in the depende
        SemText semtext = conv.semText(new NLText("ciao"));
 ```
 
-#####  SemanticString 
+####  SemanticString 
 ```
        SemanticStringConverter conv = SemanticStringConverter.of(
                UrlMapper.of("http://mysite.org/entities/", 

@@ -1,5 +1,8 @@
-SemText NLText Converters
-===
+<p class="jedoc-to-strip">
+WARNING: THIS IS ONLY A TEMPLATE FOR THE DOCUMENTATION. <br/>
+RELEASE DOCS ARE ON THE <a href="http://opendatatrentino.github.io/semtext-nltext/" target="_blank">PROJECT WEBSITE</a>
+</p>
+
 <!--
 <p align="center">
 <img alt="Jackan" src="https://github.com/opendatatrentino/jackan/wiki/img/jackan-logo-200px.png" width="150px">
