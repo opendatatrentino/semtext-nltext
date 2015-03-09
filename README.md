@@ -31,6 +31,7 @@ License: business-friendly [Apache License v2.0](LICENSE.txt)
 
 Contributing: See [the wiki](../../wiki)
 
+<br/>
 
 **Credits**:
 
