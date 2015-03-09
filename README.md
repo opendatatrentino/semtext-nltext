@@ -9,24 +9,28 @@ RELEASE DOCS ARE ON THE <a href="http://opendatatrentino.github.io/semtext-nltex
 </p>
 -->
 
-<br/>
+**About**
 
-Java libraries providing following converters for [SemText](https://github.com/opendatatrentino/semtext):
-  * NLText to SemText 
-  * SemText to SemanticString  
-  * SemanticString to SemText
+Java library providing following converters for [SemText](https://github.com/opendatatrentino/semtext):
+  
+* NLText to SemText 
+* SemText to SemanticString  
+* SemanticString to SemText
 
-**Project status**: developing [milestone 0.5](https://github.com/opendatatrentino/semtext-nltext/issues?milestone=1&state=open) 
+Features:
 
-**Usage**: Project is not published yet, so [docs](docs/x.y/index.md) are subject to change. 
-
-**Contributing**: see [the wiki](https://github.com/opendatatrentino/semtext-nltext/wiki)
-
-
-**Features**:
   * dependency handling with Maven
   * has a liberal Apache 2.0 license
   * supports Java 6+
+
+Usage: See [docs](docs)
+
+Roadmap: See [project milestones](../../milestones)
+
+License: business-friendly [Apache License v2.0](LICENSE.txt)
+
+Contributing: See [the wiki](../../wiki)
+
 
 **Credits**:
 
