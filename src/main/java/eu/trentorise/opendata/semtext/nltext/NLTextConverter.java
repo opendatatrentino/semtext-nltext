@@ -43,8 +43,8 @@ import javax.annotation.concurrent.Immutable;
  */
 @ParametersAreNonnullByDefault
 @Immutable
-public final class NLTextConverter {    
-    
+public final class NLTextConverter {
+
     private static final Logger logger = Logger.getLogger(NLTextConverter.class.getName());
 
     private static final NLTextConverter INSTANCE = new NLTextConverter(UrlMapper.of("", ""));
@@ -72,20 +72,48 @@ public final class NLTextConverter {
     }
 
     /**
-     * Currently it always return the lemma(s) with unknown locale.
+     * Returns a Dict made with the synonims preent inthe meaning. If they are
+     * absent, NLMeaning.getLemma is used instead. The method never throws, on
+     * error it just returns a Dict will less information.
      */
-    public static Dict dict(NLMeaning meaning) {
-        logger.warning("TODO - RETURNING MEANING LEMMA(S) WITH UNKNOWN LOCALE!");
-        
-        Object lemmasProp = meaning.getProp(NLTextUnit.PFX, "synonymousLemmas");
-        if (lemmasProp != null){
-            List<String> lemmas = (List<String>) meaning.getProp(NLTextUnit.PFX, "synonymousLemmas");            
-            if (lemmas.size() > 0){
-                return Dict.of(lemmas);
+    public static Dict dict(@Nullable NLMeaning meaning) {
+        try {
+            if (meaning == null) {
+                logger.warning("found null NLMeaning while extracting dict, returning empty Dict");
+                return Dict.of();
+            }
+
+            logger.warning("TODO - RETURNING MEANING LEMMA(S) WITH UNKNOWN LOCALE!");
+
+            Object lemmasProp = meaning.getProp(NLTextUnit.PFX, "synonymousLemmas");
+            if (lemmasProp != null) {
+                List<String> lemmas = (List<String>) meaning.getProp(NLTextUnit.PFX, "synonymousLemmas");
+
+                if (lemmas != null) {
+                    List<String> sanitizedLemmas = new ArrayList();
+                    for (String lemma : lemmas) {
+                        if (lemma == null) {
+                            logger.warning("Found null synonym in NLMeaing!");
+                        } else {
+                            sanitizedLemmas.add(lemma);
+                        }
+                    }
+                    return Dict.of(sanitizedLemmas);
+                }
+
+            }
+            if (meaning.getLemma() == null) {
+                logger.warning("Found NLMeaning.getLemma() = null !");
+                return Dict.of();
+            } else {
+                return Dict.of(meaning.getLemma());
             }
         }
-        
-        return Dict.of(meaning.getLemma());
+        catch (Throwable tr) {
+            logger.log(Level.SEVERE, "Error while creating Dict from NLMeaning, returning empty Dict", tr);
+            return Dict.of();
+        }
+
     }
 
     /**
@@ -197,7 +225,7 @@ public final class NLTextConverter {
                     Integer mteo = (Integer) sentence.getTokens().get(i + tokensSize - 1).getProp(NLTextUnit.PFX, "sentenceEndOffset");
 
                     if (mtso == null || mteo == null) {
-                        i += tokensSize;                        
+                        i += tokensSize;
                     } else {
                         Set<NLMeaning> ms = new HashSet(multiThing.getMeanings());
 
@@ -294,33 +322,49 @@ public final class NLTextConverter {
             locale = new Locale(lang);
         }
 
-        return SemText.ofSentences(locale, nltext.getText(),  sentences);
+        return SemText.ofSentences(locale, nltext.getText(), sentences);
     }
 
     /**
-     * Converts provided NLMeaning to a semtext Meaning.
+     * Converts provided NLMeaning to a semtext Meaning. This function never
+     * never throws, on error it simply returns a less meaningful... meaning and
+     * logs a warning.
      */
-    public Meaning semTextMeaning(NLMeaning nlMeaning) {
-        checkNotNull(nlMeaning);
-        MeaningKind kind = null;
-        String url = "";
-        Long id;
-        if (nlMeaning instanceof NLSenseMeaning) {
-            kind = MeaningKind.CONCEPT;
-            id = ((NLSenseMeaning) nlMeaning).getConceptId();
-            if (id != null) {
-                url = urlMapper.conceptIdToUrl(id);
+    public Meaning semTextMeaning(@Nullable NLMeaning nlMeaning) {
+        try {
+            if (nlMeaning == null) {
+                logger.warning("Found null nlMeaning during conversion to SemText meaning, returning empty Meaning.of()");
+                return Meaning.of();
             }
-        } else if (nlMeaning instanceof NLEntityMeaning) {
-            kind = MeaningKind.ENTITY;
-            id = ((NLEntityMeaning) nlMeaning).getObjectID();
-            if (id != null) {
-                url = urlMapper.entityIdToUrl(id);
+
+            MeaningKind kind = null;
+            String url = "";
+            Long id;
+
+            Object lemmasProp = nlMeaning.getProp(NLTextUnit.PFX, "synonymousLemmas");
+
+            if (nlMeaning instanceof NLSenseMeaning) {
+                kind = MeaningKind.CONCEPT;
+                id = ((NLSenseMeaning) nlMeaning).getConceptId();
+                if (id != null) {
+                    url = urlMapper.conceptIdToUrl(id);
+                }
+            } else if (nlMeaning instanceof NLEntityMeaning) {
+                kind = MeaningKind.ENTITY;
+                id = ((NLEntityMeaning) nlMeaning).getObjectID();
+                if (id != null) {
+                    url = urlMapper.entityIdToUrl(id);
+                }
+            } else {
+                throw new IllegalArgumentException("Found an unsupported meaning type: " + nlMeaning.getClass().getName());
             }
-        } else {
-            throw new IllegalArgumentException("Found an unsupported meaning type: " + nlMeaning.getClass().getName());
-        }        
-        return Meaning.of(url, kind, nlMeaning.getProbability(), dict(nlMeaning));
+            return Meaning.of(url, kind, nlMeaning.getProbability(), dict(nlMeaning));
+        }
+        catch (Throwable tr) {
+            logger.log(Level.SEVERE, "Error while converting NLMeaning to SemText meaning, returning empty Meaning.of()", tr);
+            return Meaning.of();
+
+        }
     }
 
     /**
@@ -372,7 +416,7 @@ public final class NLTextConverter {
     }
 
     /**
-     * Returns the UrlMapper used by the converter.     
+     * Returns the UrlMapper used by the converter.
      */
     public UrlMapper getUrlMapper() {
         return urlMapper;
