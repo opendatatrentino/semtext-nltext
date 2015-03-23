@@ -16,6 +16,7 @@
 package eu.trentorise.opendata.semtext.nltext;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import com.google.common.collect.ImmutableList;
 import eu.trentorise.opendata.semtext.Meaning;
 import eu.trentorise.opendata.semtext.MeaningKind;
 import eu.trentorise.opendata.semtext.MeaningStatus;
@@ -45,16 +46,18 @@ import org.slf4j.LoggerFactory;
 @Immutable
 public final class SemanticStringConverter {
 
-    private static final Logger logger = LoggerFactory.getLogger(SemanticStringConverter.class);
+    private static final Logger LOG = LoggerFactory.getLogger(SemanticStringConverter.class);
 
-    private static final SemanticStringConverter INSTANCE = new SemanticStringConverter(UrlMapper.of());
+    private static final SemanticStringConverter INSTANCE = new SemanticStringConverter();
 
     private UrlMapper urlMapper;
 
     private SemanticStringConverter() {
+        this.urlMapper = UrlMapper.of();
     }
 
     private SemanticStringConverter(UrlMapper urlMapper) {
+        this();
         checkNotNull(urlMapper);
         this.urlMapper = urlMapper;
     }
@@ -67,6 +70,9 @@ public final class SemanticStringConverter {
         return INSTANCE;
     }
 
+    /**
+     * Returns a converter using the provided url mapper.
+     */
     public static SemanticStringConverter of(UrlMapper urlMapper) {
         return new SemanticStringConverter(urlMapper);
     }
@@ -91,11 +97,10 @@ public final class SemanticStringConverter {
             entityTerms.add(entityTerm);
             return;
         }
-        if (MeaningKind.UNKNOWN.equals(m.getKind())) {
-            if (m.getId().length() > 0) {
-                logger.warn("Found meaning of kind UNKNOWN with non-empty id: {0}, skipping it !", m.getId());
-                return;
-            }
+        if (MeaningKind.UNKNOWN.equals(m.getKind())
+                && m.getId().length() > 0) {
+            LOG.warn("Found meaning of kind UNKNOWN with non-empty id: {0}, skipping it !", m.getId());
+            return;
         }
         throw new IllegalArgumentException("Found not supported MeaningKind: " + m.getKind());
     }
@@ -158,6 +163,7 @@ public final class SemanticStringConverter {
      */
     public SemText semText(@Nullable SemanticString ss) {
         if (ss == null) {
+            LOG.warn("Found null semantic string, returning empty SemText");
             return SemText.of();
         }
 
@@ -183,40 +189,10 @@ public final class SemanticStringConverter {
 
                             List<Meaning> meanings = new ArrayList();
 
-                            if (st.getConceptTerms() != null) {
-                                for (ConceptTerm ct : st.getConceptTerms()) {
-                                    if (ct.getValue() != null) {
-                                        double weight;
-                                        if (ct.getWeight() == null) {
-                                            weight = 1.0;
-                                        } else {
-                                            weight = ct.getWeight();
-                                        }
-                                        Long id = ct.getValue();
-                                        if (id != null) {
-                                            meanings.add(Meaning.of(urlMapper.conceptIdToUrl(id), MeaningKind.CONCEPT, weight));
-                                        }
+                            meanings.addAll(semtextMeaningsFromConceptTerms(st.getConceptTerms()));
 
-                                    }
-                                }
-                            }
-                            if (st.getInstanceTerms() != null) {
-                                for (InstanceTerm it : st.getInstanceTerms()) {
-                                    if (it.getValue() != null) {
-                                        double weight;
-                                        if (it.getWeight() == null) {
-                                            weight = 1.0;
-                                        } else {
-                                            weight = it.getWeight();
-                                        }
-                                        Long id = it.getValue();
-                                        if (id != null) {
-                                            meanings.add(Meaning.of(urlMapper.entityIdToUrl(it.getValue()), MeaningKind.ENTITY, weight));
-                                        }
-                                    }
+                            meanings.addAll(semtextMeaningsFromInstanceTerms(st.getInstanceTerms()));
 
-                                }
-                            }
                             if (meanings.size() > 0) {
 
                                 Meaning selectedMeaning = SemTexts.disambiguate(meanings);
@@ -242,10 +218,55 @@ public final class SemanticStringConverter {
 
         sentences.add(Sentence.of(0, text.length(), words));
 
-        return SemText.ofSentences(Locale.ROOT, text,  sentences);
+        return SemText.ofSentences(Locale.ROOT, text, sentences);
     }
 
     public UrlMapper getUrlMapper() {
         return urlMapper;
     }
+
+    private ImmutableList<Meaning> semtextMeaningsFromConceptTerms(@Nullable Iterable<ConceptTerm> conceptTerms) {
+        ImmutableList.Builder<Meaning> retb = ImmutableList.builder();
+        if (conceptTerms != null) {
+            for (ConceptTerm ct : conceptTerms) {
+                if (ct.getValue() != null) {
+                    double weight;
+                    if (ct.getWeight() == null) {
+                        weight = 1.0;
+                    } else {
+                        weight = ct.getWeight();
+                    }
+                    Long id = ct.getValue();
+                    if (id != null) {
+                        retb.add(Meaning.of(urlMapper.conceptIdToUrl(id), MeaningKind.CONCEPT, weight));
+                    }
+
+                }
+            }
+        }
+        return retb.build();
+    }
+
+    private ImmutableList<Meaning> semtextMeaningsFromInstanceTerms(@Nullable Iterable<InstanceTerm> instanceTerms) {
+        ImmutableList.Builder<Meaning> retb = ImmutableList.builder();
+        if (instanceTerms != null) {
+            for (InstanceTerm it : instanceTerms) {
+                if (it.getValue() != null) {
+                    double weight;
+                    if (it.getWeight() == null) {
+                        weight = 1.0;
+                    } else {
+                        weight = it.getWeight();
+                    }
+                    Long id = it.getValue();
+                    if (id != null) {
+                        retb.add(Meaning.of(urlMapper.entityIdToUrl(it.getValue()), MeaningKind.ENTITY, weight));
+                    }
+                }
+
+            }
+        }
+        return retb.build();
+    }
+
 }
