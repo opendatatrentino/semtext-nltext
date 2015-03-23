@@ -15,7 +15,6 @@
  */
 package eu.trentorise.opendata.semtext.nltext.test;
 
-import com.google.common.collect.Lists;
 import eu.trentorise.opendata.commons.OdtConfig;
 import eu.trentorise.opendata.semtext.nltext.SemanticStringConverter;
 import eu.trentorise.opendata.semtext.nltext.UrlMapper;

@@ -309,13 +309,13 @@ public class NLTextConverterTest {
 
         @Test
     public void exampleUsage(){
-       NLTextConverter conv = NLTextConverter.of(
+       NLTextConverter converter = NLTextConverter.of(
                UrlMapper.of("http://mysite.org/entities/", 
                             "http://mysite.org/concepts/")); 
                 // when creating semtext, string ids will have these prefixes 
                 // followed by the numerical ids of found in nltexts
         
-       SemText semtext = conv.semText(new NLText("ciao"));       
+       SemText semtext = converter.semText(new NLText("ciao"));       
     }
 
 }

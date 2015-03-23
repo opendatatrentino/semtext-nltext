@@ -1,5 +1,6 @@
 package eu.trentorise.opendata.semtext.nltext;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.common.collect.ImmutableList;
 import eu.trentorise.opendata.commons.Dict;
@@ -45,16 +46,18 @@ import javax.annotation.concurrent.Immutable;
 @Immutable
 public final class NLTextConverter {
 
-    private static final Logger logger = Logger.getLogger(NLTextConverter.class.getName());
+    private static final Logger LOG = Logger.getLogger(NLTextConverter.class.getName());
 
-    private static final NLTextConverter INSTANCE = new NLTextConverter(UrlMapper.of("", ""));
+    private static final NLTextConverter INSTANCE = new NLTextConverter();
 
     private UrlMapper urlMapper;
 
     private NLTextConverter() {
+        urlMapper = UrlMapper.of();
     }
 
     private NLTextConverter(UrlMapper urlMapper) {
+        this();
         checkNotNull(urlMapper);
         this.urlMapper = urlMapper;
     }
@@ -79,11 +82,11 @@ public final class NLTextConverter {
     public static Dict dict(@Nullable NLMeaning meaning) {
         try {
             if (meaning == null) {
-                logger.warning("found null NLMeaning while extracting dict, returning empty Dict");
+                LOG.warning("found null NLMeaning while extracting dict, returning empty Dict");
                 return Dict.of();
             }
 
-            logger.warning("TODO - RETURNING MEANING LEMMA(S) WITH UNKNOWN LOCALE!");
+            LOG.warning("TODO - RETURNING MEANING LEMMA(S) WITH UNKNOWN LOCALE!");
 
             Object lemmasProp = meaning.getProp(NLTextUnit.PFX, "synonymousLemmas");
             if (lemmasProp != null) {
@@ -93,7 +96,7 @@ public final class NLTextConverter {
                     List<String> sanitizedLemmas = new ArrayList();
                     for (String lemma : lemmas) {
                         if (lemma == null) {
-                            logger.warning("Found null synonym in NLMeaing!");
+                            LOG.warning("Found null synonym in NLMeaing!");
                         } else {
                             sanitizedLemmas.add(lemma);
                         }
@@ -103,14 +106,14 @@ public final class NLTextConverter {
 
             }
             if (meaning.getLemma() == null) {
-                logger.warning("Found NLMeaning.getLemma() = null !");
+                LOG.warning("Found NLMeaning.getLemma() = null !");
                 return Dict.of();
             } else {
                 return Dict.of(meaning.getLemma());
             }
         }
-        catch (Throwable tr) {
-            logger.log(Level.SEVERE, "Error while creating Dict from NLMeaning, returning empty Dict", tr);
+        catch (Exception ex) {
+            LOG.log(Level.SEVERE, "Error while creating Dict from NLMeaning, returning empty Dict", ex);
             return Dict.of();
         }
 
@@ -143,16 +146,17 @@ public final class NLTextConverter {
         } else if (tok instanceof NLMultiWord) {
             return MeaningKind.CONCEPT;
         } else {
-            logger.log(Level.WARNING, "Found token with unhandled class {0},  setting meaning kind to UNKNWON.", tok.getClass());
+            LOG.log(Level.WARNING, "Found token with unhandled class {0},  setting meaning kind to UNKNWON.", tok.getClass());
             return MeaningKind.UNKNOWN;
         }
     }
 
     /**
-     * Transforms multiwords and named entities into tokens and only includes
-     * tokens for which startOffset and endOffset are defined.
+     * Converter from NLSentence to SemText Sentence.
      *
-     * @param sentence
+     * Transforms multiwords and named entities into non-overlapping terms and
+     * only includes terms for which startOffset and endOffset are defined.
+     *
      */
     private Sentence semTextSentence(NLSentence sentence) {
 
@@ -177,7 +181,7 @@ public final class NLTextConverter {
 
         List<NLToken> tokens = sentence.getTokens();
         if (tokens == null) {
-            logger.warning("Found NLSentence with null tokens, returning Sentence with no tokens");
+            LOG.warning("Found NLSentence with null tokens, returning Sentence with no tokens");
             return Sentence.of(startOffset, endOffset);
         }
 
@@ -190,7 +194,7 @@ public final class NLTextConverter {
             }
 
             if (t == null) {
-                logger.log(Level.WARNING, "Couldn''t find token at position {0}, skipping it.", i);
+                LOG.log(Level.WARNING, "Couldn''t find token at position {0}, skipping it.", i);
                 i += 1;
                 continue;
             }
@@ -203,13 +207,13 @@ public final class NLTextConverter {
 
                 if (isUsedInComplexToken(t)) {
                     if (getMultiTokens(t).size() > 1) {
-                        logger.warning("Found a token belonging to multiple words and/or named entities. Taking only the first one.");
+                        LOG.warning("Found a token belonging to multiple words and/or named entities. Taking only the first one.");
                     }
                     if (getMultiTokens(t).isEmpty()) {
-                        throw new IllegalArgumentException("Token should be used in multitokens, but none found. Skipping token.");
+                        throw new IllegalArgumentException("Token should be used in multitokens, but none found. ");
                     }
 
-                    NLComplexToken multiThing = getMultiTokens(t).get(0); // t.getMultiTerms().get(0);
+                    NLComplexToken multiThing = getMultiTokens(t).get(0); 
 
                     int tokensSize = 1;
                     for (int j = i + 1; j < sentence.getTokens().size(); j++) {
@@ -226,45 +230,14 @@ public final class NLTextConverter {
 
                     if (mtso == null || mteo == null) {
                         i += tokensSize;
-                    } else {
-                        Set<NLMeaning> ms = new HashSet(multiThing.getMeanings());
-
-                        if (multiThing.getMeanings().isEmpty() && multiThing.getSelectedMeaning() != null) {
-                            ms.add(multiThing.getSelectedMeaning());
-                        }
-
-                        TreeSet<Meaning> sortedMeanings;
-                        MeaningStatus meaningStatus;
-                        Meaning selectedMeaning;
-
-                        if (ms.size() > 0) {
-                            sortedMeanings = makeSortedMeanings(ms);
-
-                            if (sortedMeanings.first().getId().isEmpty()) {
-                                meaningStatus = MeaningStatus.TO_DISAMBIGUATE;
-                                selectedMeaning = null;
-                            } else {
-                                meaningStatus = MeaningStatus.SELECTED;
-                                selectedMeaning = sortedMeanings.first();
-                            }
-
-                        } else { // no meanings, but we know the kind                        
-                            sortedMeanings = new TreeSet<Meaning>();
-                            MeaningKind kind = getKind(multiThing);
-                            if (MeaningKind.UNKNOWN != kind) {
-                                sortedMeanings.add(Meaning.of("", kind, 1.0));
-                            }
-                            meaningStatus = MeaningStatus.TO_DISAMBIGUATE;
-                            selectedMeaning = null;
-                        }
-                        words.add(Term.of(startOffset + mtso,
-                                startOffset + mteo,
-                                meaningStatus, selectedMeaning, sortedMeanings));
-
+                    } else {                        
+                        words.add(semTextTerm(startOffset + mtso,
+                                                 startOffset + mteo, 
+                                                 multiThing));
                         i += tokensSize;
                     }
 
-                } else {
+                } else { // not used in complex token
                     if (t.getProp(NLTextUnit.PFX, "sentenceStartOffset") != null
                             && t.getProp(NLTextUnit.PFX, "sentenceEndOffset") != null
                             && t.getMeanings().size() > 0) {
@@ -274,7 +247,7 @@ public final class NLTextConverter {
                 }
             }
             catch (Exception ex) {
-                logger.log(Level.WARNING, "Error while processing token at position " + i + " with text " + t.getText() + ", skipping it.", ex);
+                LOG.log(Level.WARNING, "Error while processing token at position " + i + " with text " + t.getText() + ", skipping it.", ex);
                 i += 1;
             }
 
@@ -291,6 +264,7 @@ public final class NLTextConverter {
     public SemText semText(@Nullable NLText nltext) {
 
         if (nltext == null) {
+            LOG.warning("Found null NLText while converting to SemText, returning empty semtext");
             return SemText.of();
         }
 
@@ -308,7 +282,7 @@ public final class NLTextConverter {
                         sentences.add(s);
                     }
                     catch (Exception ex) {
-                        logger.log(Level.WARNING, "Error while converting NLSentence, skipping it.", ex);
+                        LOG.log(Level.WARNING, "Error while converting NLSentence, skipping it.", ex);
                     }
                 }
             }
@@ -316,7 +290,7 @@ public final class NLTextConverter {
         Locale locale;
         String lang = nltext.getLanguage();
         if (lang == null) {
-            logger.log(Level.WARNING, "Found null language in nltext {0}, setting Locale.ROOT", nltext.getText());
+            LOG.log(Level.WARNING, "Found null language in nltext {0}, setting Locale.ROOT", nltext.getText());
             locale = Locale.ROOT;
         } else {
             locale = new Locale(lang);
@@ -327,21 +301,19 @@ public final class NLTextConverter {
 
     /**
      * Converts provided NLMeaning to a semtext Meaning. This function never
-     * never throws, on error it simply returns a less meaningful... meaning and
-     * logs a warning.
+     * throws, on error it simply returns a less meaningful... meaning and logs
+     * a warning.
      */
     public Meaning semTextMeaning(@Nullable NLMeaning nlMeaning) {
         try {
             if (nlMeaning == null) {
-                logger.warning("Found null nlMeaning during conversion to SemText meaning, returning empty Meaning.of()");
+                LOG.warning("Found null nlMeaning during conversion to SemText meaning, returning empty Meaning.of()");
                 return Meaning.of();
             }
 
             MeaningKind kind = null;
             String url = "";
             Long id;
-
-            Object lemmasProp = nlMeaning.getProp(NLTextUnit.PFX, "synonymousLemmas");
 
             if (nlMeaning instanceof NLSenseMeaning) {
                 kind = MeaningKind.CONCEPT;
@@ -360,10 +332,9 @@ public final class NLTextConverter {
             }
             return Meaning.of(url, kind, nlMeaning.getProbability(), dict(nlMeaning));
         }
-        catch (Throwable tr) {
-            logger.log(Level.SEVERE, "Error while converting NLMeaning to SemText meaning, returning empty Meaning.of()", tr);
+        catch (Exception ex) {
+            LOG.log(Level.SEVERE, "Error while converting NLMeaning to SemText meaning, returning empty Meaning.of()", ex);
             return Meaning.of();
-
         }
     }
 
@@ -381,10 +352,12 @@ public final class NLTextConverter {
     }
 
     /**
-     * @param nlToken must have startOffset and endOffset a throws
-     * RuntimeException
+     * @param nlToken must have startOffset and endOffset otherwise throws
+     * IllegalArgumentException
      */
     private Term semTextTerm(NLToken nlToken, int sentenceStartOffset) {
+
+        checkArgument(sentenceStartOffset >= 0, "Sentence start offset can't be negative! Offset found: %s", sentenceStartOffset);
 
         Integer so = (Integer) nlToken.getProp(NLTextUnit.PFX, "sentenceStartOffset");
         Integer eo = (Integer) nlToken.getProp(NLTextUnit.PFX, "sentenceEndOffset");
@@ -420,6 +393,43 @@ public final class NLTextConverter {
      */
     public UrlMapper getUrlMapper() {
         return urlMapper;
+    }
+    
+    private Term semTextTerm(int startOffset, int endOffset,  NLComplexToken multiThing) {
+        
+        Set<NLMeaning> ms = new HashSet(multiThing.getMeanings());
+
+        if (multiThing.getMeanings().isEmpty() && multiThing.getSelectedMeaning() != null) {
+            ms.add(multiThing.getSelectedMeaning());
+        }
+
+        TreeSet<Meaning> sortedMeanings;
+        MeaningStatus meaningStatus;
+        Meaning selectedMeaning;
+
+        if (ms.size() > 0) {
+            sortedMeanings = makeSortedMeanings(ms);
+
+            if (sortedMeanings.first().getId().isEmpty()) {
+                meaningStatus = MeaningStatus.TO_DISAMBIGUATE;
+                selectedMeaning = null;
+            } else {
+                meaningStatus = MeaningStatus.SELECTED;
+                selectedMeaning = sortedMeanings.first();
+            }
+
+        } else { // no meanings, but we know the kind                        
+            sortedMeanings = new TreeSet<Meaning>();
+            MeaningKind kind = getKind(multiThing);
+            if (MeaningKind.UNKNOWN != kind) {
+                sortedMeanings.add(Meaning.of("", kind, 1.0));
+            }
+            meaningStatus = MeaningStatus.TO_DISAMBIGUATE;
+            selectedMeaning = null;
+        }
+        return Term.of(startOffset,
+                         endOffset,
+                         meaningStatus, selectedMeaning, sortedMeanings);
     }
 
 }
