@@ -70,6 +70,9 @@ public final class NLTextConverter {
         return INSTANCE;
     }
 
+    /**
+     * Returns a converter that will use the provided url mapper for converting entity/concept ids to urls.
+     */
     public static NLTextConverter of(UrlMapper urlMapper) {
         return new NLTextConverter(urlMapper);
     }

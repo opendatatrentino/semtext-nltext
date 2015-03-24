@@ -221,6 +221,9 @@ public final class SemanticStringConverter {
         return SemText.ofSentences(Locale.ROOT, text, sentences);
     }
 
+    /**
+     * Returns the UrlMapper used by the converter.
+     */
     public UrlMapper getUrlMapper() {
         return urlMapper;
     }
