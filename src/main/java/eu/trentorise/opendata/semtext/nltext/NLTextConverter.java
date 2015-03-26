@@ -155,9 +155,6 @@ public final class NLTextConverter {
         }
     }
 
-    private void checkSentence(NLSentence sentence) {
-
-    }
 
     /**
      * Converter from NLSentence to SemText Sentence.
