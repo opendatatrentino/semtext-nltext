@@ -26,23 +26,28 @@ SemText NLText is available on Maven Central. To use it, put this in the depende
 #### NLText
 
 ```
-       NLTextConverter conv = NLTextConverter.of(
+       NLTextConverter converter = NLTextConverter.of(
                UrlMapper.of("http://mysite.org/entities/", 
                             "http://mysite.org/concepts/")); 
                 // when creating semtext, string ids will have these prefixes 
-                // followed by the numerical ids of found in NLText
-        
-       SemText semtext = conv.semText(new NLText("ciao"));
+                // followed by the numerical ids of found in nltexts
+
+       // second parameter indicates the nltext tags are supposed to have been 
+       // entirely reviewed by a human
+       SemText semtext = converter.semText(new NLText("ciao"), true);
 ```
 
-####  SemanticString 
+####  SemanticString
 ```
-       SemanticStringConverter conv = SemanticStringConverter.of(
-               UrlMapper.of("http://mysite.org/entities/", 
-                            "http://mysite.org/concepts/")); 
-                // when creating semtext, string ids will have these prefixes 
-                // followed by the numerical ids of found in semantic strings
-        
-       SemText semtext = conv.semText(new SemanticString("ciao"));
-       SemanticString semstring = conv.semanticString(SemText.of("ciao"));
+        SemanticStringConverter conv = SemanticStringConverter.of(
+                UrlMapper.of("http://mysite.org/entities/",
+                        "http://mysite.org/concepts/"));
+                // when creating semtext, string ids will have these prefixes
+        // followed by the numerical ids of found in semantic strings
+
+        // by setting true as second parameter we are instructing the converter
+        // that we suppose the SemanticString meanings have been reviewed by a human.
+        SemText semtext = conv.semText(new SemanticString("ciao"), true);
+
+        SemanticString semstring = conv.semanticString(SemText.of("ciao"));
 ```

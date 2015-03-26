@@ -330,7 +330,8 @@ public class NLTextConverterTest {
                 // when creating semtext, string ids will have these prefixes 
                 // followed by the numerical ids of found in nltexts
         
-       // second parameter indicates the nltext tags are supposed to have been entirely reviewed by a human
+       // second parameter indicates the nltext tags are supposed to have been 
+       // entirely reviewed by a human
        SemText semtext = converter.semText(new NLText("ciao"), true);       
     }
 
