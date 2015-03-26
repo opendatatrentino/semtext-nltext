@@ -108,7 +108,7 @@ public final class SemanticStringConverter {
     /**
      * Converts input semantic text into a semantic string. For each Term of
      * input semantic text a ComplexConcept holding one semantic term is
-     * created.
+     * created. Warning: conversion may be lossy.
      *
      * @param st the semantic string to convert
      * @return a semantic string representation of input semantic text
@@ -154,14 +154,22 @@ public final class SemanticStringConverter {
 
     /**
      * Converts provided semantic string to a semantic text. Semantic text terms
-     * meaning status will be deducted using the {@link SemTexts#disambiguate(java.lang.Iterable)
-     * } function.
-     *
+     * meaning statuses will be deducted using the
+     * {@link SemTexts#disambiguate(java.lang.Iterable) SemTexts#disambiguate}
+     * function. <br/>
+     * <br/>
      * Given that semantic string is underspecified, it is not possible to know
      * if we can faithfully convert all the semantic strings out there.
      *
+     * @param checkedByUser if true, the semantic string {@code ss} is supposed
+     * to have been reviewed entirely by a human and meaning statuses in
+     * returned {@code SemText} will be either {@link MeaningStatus#REVIEWED REVIEWED}
+     * or {@link MeaningStatus#NOT_SURE NOT_SURE}, otherwise the semantic string
+     * is supposed to have been enriched automatically by some nlp service and
+     * meaning statuses will be either {@link MeaningStatus#SELECTED SELECTED}
+     * or {@link MeaningStatus#TO_DISAMBIGUATE TO_DISAMBIGUATE}.
      */
-    public SemText semText(@Nullable SemanticString ss) {
+    public SemText semText(@Nullable SemanticString ss, boolean checkedByUser) {
         if (ss == null) {
             LOG.warn("Found null semantic string, returning empty SemText");
             return SemText.of();
@@ -198,9 +206,18 @@ public final class SemanticStringConverter {
                                 Meaning selectedMeaning = SemTexts.disambiguate(meanings);
                                 MeaningStatus meaningStatus;
                                 if (selectedMeaning == null) {
-                                    meaningStatus = MeaningStatus.TO_DISAMBIGUATE;
+                                    if (checkedByUser) {
+                                        meaningStatus = MeaningStatus.NOT_SURE;
+                                    } else {
+                                        meaningStatus = MeaningStatus.TO_DISAMBIGUATE;
+                                    }
+
                                 } else {
-                                    meaningStatus = MeaningStatus.SELECTED;
+                                    if (checkedByUser) {
+                                        meaningStatus = MeaningStatus.REVIEWED;
+                                    } else {
+                                        meaningStatus = MeaningStatus.SELECTED;
+                                    }
                                 }
                                 words.add(Term.of(st.getOffset(),
                                         st.getOffset() + st.getText().length(),

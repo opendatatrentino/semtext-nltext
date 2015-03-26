@@ -71,7 +71,8 @@ public final class NLTextConverter {
     }
 
     /**
-     * Returns a converter that will use the provided url mapper for converting entity/concept ids to urls.
+     * Returns a converter that will use the provided url mapper for converting
+     * entity/concept ids to urls.
      */
     public static NLTextConverter of(UrlMapper urlMapper) {
         return new NLTextConverter(urlMapper);
@@ -154,14 +155,21 @@ public final class NLTextConverter {
         }
     }
 
+    private void checkSentence(NLSentence sentence) {
+
+    }
+
     /**
      * Converter from NLSentence to SemText Sentence.
      *
      * Transforms multiwords and named entities into non-overlapping terms and
      * only includes terms for which startOffset and endOffset are defined.
      *
+     * Warning: conversion may be lossy.
+     * 
+     * @param checkedByUser see {@link #semText(it.unitn.disi.sweb.core.nlp.model.NLText, boolean) }
      */
-    private Sentence semTextSentence(NLSentence sentence) {
+    private Sentence semTextSentence(NLSentence sentence, boolean checkedByUser) {
 
         if (sentence == null) {
             throw new IllegalArgumentException("Cannot convert a null sentence!");
@@ -169,7 +177,7 @@ public final class NLTextConverter {
 
         int startOffset;
         int endOffset;
-        List<Term> words = new ArrayList<Term>();
+        List<Term> terms = new ArrayList<Term>();
 
         Integer so = (Integer) sentence.getProp(NLTextUnit.PFX, "startOffset");
         Integer eo = (Integer) sentence.getProp(NLTextUnit.PFX, "endOffset");
@@ -216,7 +224,7 @@ public final class NLTextConverter {
                         throw new IllegalArgumentException("Token should be used in multitokens, but none found. ");
                     }
 
-                    NLComplexToken multiThing = getMultiTokens(t).get(0); 
+                    NLComplexToken multiThing = getMultiTokens(t).get(0);
 
                     int tokensSize = 1;
                     for (int j = i + 1; j < sentence.getTokens().size(); j++) {
@@ -233,10 +241,11 @@ public final class NLTextConverter {
 
                     if (mtso == null || mteo == null) {
                         i += tokensSize;
-                    } else {                        
-                        words.add(semTextTerm(startOffset + mtso,
-                                                 startOffset + mteo, 
-                                                 multiThing));
+                    } else {
+                        terms.add(semTextTerm(startOffset + mtso,
+                                startOffset + mteo,
+                                multiThing,
+                                checkedByUser));
                         i += tokensSize;
                     }
 
@@ -244,7 +253,7 @@ public final class NLTextConverter {
                     if (t.getProp(NLTextUnit.PFX, "sentenceStartOffset") != null
                             && t.getProp(NLTextUnit.PFX, "sentenceEndOffset") != null
                             && t.getMeanings().size() > 0) {
-                        words.add(semTextTerm(t, startOffset));
+                        terms.add(semTextTerm(t, startOffset, checkedByUser));
                     }
                     i += 1;
                 }
@@ -256,16 +265,25 @@ public final class NLTextConverter {
 
         }
 
-        return Sentence.of(startOffset, endOffset, words);
+        return Sentence.of(startOffset, endOffset, terms);
     }
 
     /**
-     * Converts provided nlText to a semantic text. Not all NLText features are
-     * supported.
+     * Converts provided {@code nltext} to a semantic text. <br/>
+     * <br/>
+     * Warning: conversion may be lossy.
+     *
+     * @param checkedByUser if true, the {@code nltext} is supposed to have been
+     * reviewed entirely by a human and meaning statuses in returned {@code SemText}
+     * will be either {@link MeaningStatus#REVIEWED REVIEWED} or
+     * {@link MeaningStatus#NOT_SURE NOT_SURE}, otherwise the semantic string is
+     * supposed to have been enriched automatically by some nlp service and
+     * meaning statuses will be either {@link MeaningStatus#SELECTED SELECTED}
+     * or {@link MeaningStatus#TO_DISAMBIGUATE TO_DISAMBIGUATE}.
      *
      */
-    public SemText semText(@Nullable NLText nltext) {
-
+    public SemText semText(@Nullable NLText nltext, boolean checkedByUser) {
+        
         if (nltext == null) {
             LOG.warning("Found null NLText while converting to SemText, returning empty semtext");
             return SemText.of();
@@ -281,7 +299,7 @@ public final class NLTextConverter {
 
                 if (so != null && eo != null) {
                     try {
-                        Sentence s = semTextSentence(nls);
+                        Sentence s = semTextSentence(nls, checkedByUser);
                         sentences.add(s);
                     }
                     catch (Exception ex) {
@@ -306,6 +324,8 @@ public final class NLTextConverter {
      * Converts provided NLMeaning to a semtext Meaning. This function never
      * throws, on error it simply returns a less meaningful... meaning and logs
      * a warning.
+     *
+     * Warning: conversion may be lossy.
      */
     public Meaning semTextMeaning(@Nullable NLMeaning nlMeaning) {
         try {
@@ -357,8 +377,9 @@ public final class NLTextConverter {
     /**
      * @param nlToken must have startOffset and endOffset otherwise throws
      * IllegalArgumentException
+     * @param checkedByUser see {@link #semText(it.unitn.disi.sweb.core.nlp.model.NLText, boolean) }
      */
-    private Term semTextTerm(NLToken nlToken, int sentenceStartOffset) {
+    private Term semTextTerm(NLToken nlToken, int sentenceStartOffset, boolean checkedByUser) {
 
         checkArgument(sentenceStartOffset >= 0, "Sentence start offset can't be negative! Offset found: %s", sentenceStartOffset);
 
@@ -383,23 +404,36 @@ public final class NLTextConverter {
         MeaningStatus meaningStatus;
 
         if (selectedMeaning == null) {
-            meaningStatus = MeaningStatus.TO_DISAMBIGUATE;
+            if (checkedByUser) {
+                meaningStatus = MeaningStatus.NOT_SURE;
+            } else {
+                meaningStatus = MeaningStatus.TO_DISAMBIGUATE;
+            }
         } else {
-            meaningStatus = MeaningStatus.SELECTED;
+            if (checkedByUser) {
+                meaningStatus = MeaningStatus.REVIEWED;
+            } else {
+                meaningStatus = MeaningStatus.SELECTED;
+            }
+
         }
 
         return Term.of(startOffset, endOffset, meaningStatus, selectedMeaning, ImmutableList.copyOf(meanings));
     }
 
     /**
-     * Returns the UrlMapper used by the converter.
+     * Returns the UrlMapper used by the converter.     
      */
     public UrlMapper getUrlMapper() {
         return urlMapper;
     }
-    
-    private Term semTextTerm(int startOffset, int endOffset,  NLComplexToken multiThing) {
-        
+
+    /**
+     * 
+     * @param checkedByUser see {@link #semText(it.unitn.disi.sweb.core.nlp.model.NLText, boolean) }
+     */
+    private Term semTextTerm(int startOffset, int endOffset, NLComplexToken multiThing, boolean checkedByUser) {
+
         Set<NLMeaning> ms = new HashSet(multiThing.getMeanings());
 
         if (multiThing.getMeanings().isEmpty() && multiThing.getSelectedMeaning() != null) {
@@ -414,10 +448,19 @@ public final class NLTextConverter {
             sortedMeanings = makeSortedMeanings(ms);
 
             if (sortedMeanings.first().getId().isEmpty()) {
-                meaningStatus = MeaningStatus.TO_DISAMBIGUATE;
+                if (checkedByUser) {
+                    meaningStatus = MeaningStatus.NOT_SURE;
+                } else {
+                    meaningStatus = MeaningStatus.TO_DISAMBIGUATE;
+                }
+
                 selectedMeaning = null;
             } else {
-                meaningStatus = MeaningStatus.SELECTED;
+                if (checkedByUser) {
+                    meaningStatus = MeaningStatus.REVIEWED;
+                } else {
+                    meaningStatus = MeaningStatus.SELECTED;
+                }
                 selectedMeaning = sortedMeanings.first();
             }
 
@@ -427,12 +470,17 @@ public final class NLTextConverter {
             if (MeaningKind.UNKNOWN != kind) {
                 sortedMeanings.add(Meaning.of("", kind, 1.0));
             }
-            meaningStatus = MeaningStatus.TO_DISAMBIGUATE;
+            if (checkedByUser) {
+                meaningStatus = MeaningStatus.NOT_SURE;
+            } else {
+                meaningStatus = MeaningStatus.TO_DISAMBIGUATE;
+            }
+
             selectedMeaning = null;
         }
         return Term.of(startOffset,
-                         endOffset,
-                         meaningStatus, selectedMeaning, sortedMeanings);
+                endOffset,
+                meaningStatus, selectedMeaning, sortedMeanings);
     }
 
 }

@@ -23,6 +23,7 @@ import org.junit.Test;
 
 import eu.trentorise.opendata.semtext.MeaningKind;
 import eu.trentorise.opendata.semtext.Meaning;
+import eu.trentorise.opendata.semtext.MeaningStatus;
 import eu.trentorise.opendata.semtext.SemText;
 import eu.trentorise.opendata.semtext.Term;
 import it.unitn.disi.sweb.core.nlp.model.NLMultiWord;
@@ -41,12 +42,13 @@ public class NLTextConverterTest {
     static final long TEST_CONCEPT_3_ID = 3L;
 
     private NLTextConverter conv;    
+   
     
     @BeforeClass
-    public static void beforeClass(){
-        OdtConfig.of(NLTextConverterTest.class).loadLogConfig();        
-    }
-    
+    public static void beforeClass() {
+        OdtConfig.init(NLTextConverterTest.class);
+    }    
+       
     @Before
     public void beforeMethod(){
         conv = NLTextConverter.of(UrlMapper.of("entities/", "concepts/"));
@@ -64,7 +66,7 @@ public class NLTextConverterTest {
     public void testNLTextToSemText_1() {
         NLText nlText = new NLText("ciao");
 
-        SemText st = conv.semText(nlText);
+        SemText st = conv.semText(nlText, true);
         assertEquals(st.getText(), nlText.getText());
         assertEquals(Locale.ROOT, st.getLocale());
     }
@@ -112,7 +114,7 @@ public class NLTextConverterTest {
         sentence.addToken(firstToken);
         nltext.addSentence(sentence);
 
-        SemText st = conv.semText(nltext);
+        SemText st = conv.semText(nltext, true);
         
 
         assertEquals(text, st.getText());
@@ -154,7 +156,7 @@ public class NLTextConverterTest {
         sentence.addToken(firstToken);
         nltext.addSentence(sentence);
 
-        SemText st = conv.semText(nltext);
+        SemText st = conv.semText(nltext, true);
 
         assertEquals(st.getText(), text);
         assertEquals(st.getSentences().size(), 1);
@@ -209,7 +211,7 @@ public class NLTextConverterTest {
 
         nltext.addSentence(sentence);
 
-        SemText st = conv.semText(nltext);        
+        SemText st = conv.semText(nltext, true);        
 
         assertEquals(text, st.getText() );
         assertEquals(1, st.getSentences().size());
@@ -220,11 +222,20 @@ public class NLTextConverterTest {
         assertEquals(null, term.getSelectedMeaning());        
     }
 
-    /**
+    
+        /**
      * tests two overlapping multiwords
      */
     @Test
-    public void testNLTextToSemText_4() {
+    public void testNLTextToSemText_complete() {
+        nltextToSemText_complete(true);
+        nltextToSemText_complete(false);
+    }
+    
+    /**
+     * tests two overlapping multiwords
+     */
+    public void nltextToSemText_complete(boolean checkedByUser) {
 
         String text = "abcd";
 
@@ -286,16 +297,14 @@ public class NLTextConverterTest {
         toksMwString_1.add(text_3);
 
         sentence.addMultiWord(new NLMultiWord("bcd", toksMw_2, toksMwString_2));
-        
-                
-        // todo use NLNamedEntity, discuss with Gabor, Simon why NLNamedEntity 
-        // constructor is different than ones for NLMultiWord
+                        
+        // todo use NLNamedEntity
 
         sentence.addToken(thirdToken);
 
         nltext.addSentence(sentence);
 
-        SemText st = conv.semText(nltext);        
+        SemText st = conv.semText(nltext, checkedByUser);        
 
         assertEquals(text, st.getText());
         assertEquals(1, st.getSentences().size() );
@@ -303,6 +312,12 @@ public class NLTextConverterTest {
         Term term = st.getSentences().get(0).getTerms().get(0);
 
         assertEquals(2, term.getMeanings().size());
+        if (checkedByUser){
+            assertEquals(MeaningStatus.NOT_SURE, term.getMeaningStatus());    
+        } else {
+            assertEquals(MeaningStatus.TO_DISAMBIGUATE, term.getMeaningStatus());
+        }
+        
         assertEquals(null, term.getSelectedMeaning());
     }
 
@@ -315,7 +330,8 @@ public class NLTextConverterTest {
                 // when creating semtext, string ids will have these prefixes 
                 // followed by the numerical ids of found in nltexts
         
-       SemText semtext = converter.semText(new NLText("ciao"));       
+       // second parameter indicates the nltext tags are supposed to have been entirely reviewed by a human
+       SemText semtext = converter.semText(new NLText("ciao"), true);       
     }
 
 }

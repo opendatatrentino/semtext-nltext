@@ -52,7 +52,7 @@ public class SemanticStringConverterTest {
 
     @BeforeClass
     public static void beforeClass() {
-        OdtConfig.of(SemanticStringConverterTest.class).loadLogConfig();
+        OdtConfig.init(SemanticStringConverterTest.class);
     }
 
     @Before
@@ -66,21 +66,24 @@ public class SemanticStringConverterTest {
     }
 
     @Test
-    public void exampleUsage(){
-       SemanticStringConverter conv = SemanticStringConverter.of(
-               UrlMapper.of("http://mysite.org/entities/", 
-                            "http://mysite.org/concepts/")); 
+    public void example() {
+        SemanticStringConverter conv = SemanticStringConverter.of(
+                UrlMapper.of("http://mysite.org/entities/",
+                        "http://mysite.org/concepts/"));
                 // when creating semtext, string ids will have these prefixes 
-                // followed by the numerical ids of found in semantic strings
+        // followed by the numerical ids of found in semantic strings
+
+        // by setting true as second parameter we are instructing the converter 
+        // that we suppose the SemanticString meanings have been reviewed by a human. 
+        SemText semtext = conv.semText(new SemanticString("ciao"), true);
         
-       SemText semtext = conv.semText(new SemanticString("ciao"));
-       SemanticString semstring = conv.semanticString(SemText.of("ciao"));
+        SemanticString semstring = conv.semanticString(SemText.of("ciao"));
     }
-    
+
     @Test
     public void testSemanticStringToSemText_0() {
         SemanticString ss = new SemanticString();
-        SemText st = conv.semText(ss);
+        SemText st = conv.semText(ss, true);
         assertEquals(ss.getText(), null);
         assertEquals(st.getText(), "");
         assertEquals(st.getSentences().size(), 1);
@@ -91,7 +94,7 @@ public class SemanticStringConverterTest {
     @Test
     public void testSemanticStringToSemText_1() {
         SemanticString ss = new SemanticString("ciao");
-        SemText st = conv.semText(ss);
+        SemText st = conv.semText(ss, true);
         assertEquals(st.getText(), ss.getText());
         assertEquals(st.getSentences().size(), 1);
         assertEquals(st.getSentences().get(0).getTerms().size(), 0);
@@ -103,7 +106,7 @@ public class SemanticStringConverterTest {
         List<ComplexConcept> ccs = new ArrayList<ComplexConcept>();
         ccs.add(new ComplexConcept());
         SemanticString ss = new SemanticString("ciao", ccs);
-        SemText st = conv.semText(ss);
+        SemText st = conv.semText(ss, true);
         assertEquals(st.getText(), ss.getText());
         assertEquals(st.getSentences().size(), 1);
         assertEquals(st.getSentences().get(0).getTerms().size(), 0);
@@ -116,7 +119,7 @@ public class SemanticStringConverterTest {
         List<SemanticTerm> sts = new ArrayList<SemanticTerm>();
         ccs.add(new ComplexConcept(sts));
         SemanticString ss = new SemanticString("ciao", ccs);
-        SemText st = conv.semText(ss);
+        SemText st = conv.semText(ss, true);
         assertEquals(st.getText(), ss.getText());
         assertEquals(st.getSentences().size(), 1);
         assertEquals(st.getSentences().get(0).getTerms().size(), 0);
@@ -130,7 +133,7 @@ public class SemanticStringConverterTest {
         sts.add(new SemanticTerm());
         ccs.add(new ComplexConcept(sts));
         SemanticString ss = new SemanticString("ciao", ccs);
-        SemText st = conv.semText(ss);
+        SemText st = conv.semText(ss, true);
         assertEquals(st.getText(), ss.getText());
         assertEquals(st.getSentences().size(), 1);
         assertEquals(st.getSentences().get(0).getTerms().size(), 0);
@@ -144,7 +147,7 @@ public class SemanticStringConverterTest {
         sts.add(new SemanticTerm("dear", 6));
         ccs.add(new ComplexConcept(sts));
         SemanticString ss = new SemanticString("hello dear world", ccs);
-        SemText st = conv.semText(ss);
+        SemText st = conv.semText(ss, true);
         assertEquals(st.getText(), ss.getText());
         assertEquals(st.getSentences().size(), 1);
         assertEquals(st.getSentences().get(0).getTerms().size(), 0);
@@ -163,7 +166,7 @@ public class SemanticStringConverterTest {
         sts.add(new SemanticTerm("dear", 6, concTerms, stringTerms, entityTerms));
         ccs.add(new ComplexConcept(sts));
         SemanticString ss = new SemanticString("hello dear world", ccs);
-        SemText st = conv.semText(ss);
+        SemText st = conv.semText(ss, true);
         assertEquals(st.getText(), ss.getText());
         assertEquals(st.getSentences().size(), 1);
         assertEquals(st.getSentences().get(0).getTerms().size(), 0);
@@ -186,7 +189,7 @@ public class SemanticStringConverterTest {
         sts.add(new SemanticTerm("dear", 6, concTerms, stringTerms, entityTerms));
         ccs.add(new ComplexConcept(sts));
         SemanticString ss = new SemanticString("hello dear world", ccs);
-        SemText st = conv.semText(ss);
+        SemText st = conv.semText(ss, true);
         assertEquals(st.getText(), ss.getText());
         assertEquals(st.getSentences().size(), 1);
         assertEquals(st.getSentences().get(0).getTerms().size(), 0);
@@ -194,8 +197,13 @@ public class SemanticStringConverterTest {
     }
 
     @Test
-    public void testSemanticStringToSemText_8() {
-        List<ComplexConcept> ccs = new ArrayList<ComplexConcept>();
+    public void testSemanticStringToSemText_complete(){
+        semanticStringToSemText_complete(true);
+        semanticStringToSemText_complete(false);
+    }
+
+    public void semanticStringToSemText_complete(boolean checkedByUser) {
+    List<ComplexConcept> ccs = new ArrayList<ComplexConcept>();
         List<SemanticTerm> sts = new ArrayList<SemanticTerm>();
 
         List<ConceptTerm> concTerms = new ArrayList<ConceptTerm>();
@@ -207,7 +215,7 @@ public class SemanticStringConverterTest {
         List<InstanceTerm> entityTerms = new ArrayList<InstanceTerm>();
         InstanceTerm it = new InstanceTerm();
         it.setValue(2L);
-        ct.setWeight(5.0);
+        it.setWeight(5.0);        
         entityTerms.add(it);
 
         List<StringTerm> stringTerms = new ArrayList<StringTerm>();
@@ -215,17 +223,23 @@ public class SemanticStringConverterTest {
         sts.add(new SemanticTerm("dear", 6, concTerms, stringTerms, entityTerms));
         ccs.add(new ComplexConcept(sts));
         SemanticString ss = new SemanticString("hello dear world", ccs);
-        SemText st = conv.semText(ss);
+        SemText st = conv.semText(ss, checkedByUser);
 
-        assertEquals(st.getText(), ss.getText());
-        assertEquals(st.getSentences().size(), 1);
-        assertEquals(st.getSentences().get(0).getTerms().size(), 1);
+        assertEquals(ss.getText(), st.getText());
+        assertEquals(1, st.getSentences().size());
+        assertEquals(1, st.getSentences().get(0).getTerms().size());
         Term t = st.getSentences().get(0).getTerms().get(0);
-        assertEquals(t.getStart(), 6);
-        assertEquals(t.getEnd(), 10);
-        assertEquals(t.getMeanings().size(), 2);
-        // assertNotEquals(w.getSelectedMeaning(), null);
-
+        assertEquals(6, t.getStart());
+        assertEquals(10, t.getEnd());
+        assertEquals(2, t.getMeanings().size());
+        if (checkedByUser){
+            assertEquals(MeaningStatus.REVIEWED, t.getMeaningStatus());
+        } else {
+            assertEquals(MeaningStatus.SELECTED, t.getMeaningStatus());
+        }
+        
+        assertEquals(conv.getUrlMapper().entityIdToUrl(2L), t.getSelectedMeaning().getId());
+       
     }
 
     @Test
@@ -274,7 +288,7 @@ public class SemanticStringConverterTest {
 
         assertEquals(text, ss.getText());
         assertEquals(1, ss.getComplexConcepts().size());
-        assertEquals( 1, ss.getComplexConcepts().get(0).getTerms().size());
+        assertEquals(1, ss.getComplexConcepts().get(0).getTerms().size());
         assertEquals(1, ss.getComplexConcepts().get(0).getTerms().get(0).getConceptTerms().size());
         assertEquals((long) ss.getComplexConcepts().get(0).getTerms().get(0).getConceptTerms().get(0).getValue(),
                 concID);

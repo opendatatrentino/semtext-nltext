@@ -29,7 +29,7 @@ public class UrlMapperTest {
     
     @BeforeClass
     public static void beforeClass(){
-        OdtConfig.of(UrlMapperTest.class).loadLogConfig();        
+        OdtConfig.init(UrlMapperTest.class);
     }
     
     @Test
