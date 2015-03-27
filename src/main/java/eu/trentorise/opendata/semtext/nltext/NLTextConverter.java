@@ -60,17 +60,17 @@ public final class NLTextConverter {
     /**
      * Field name of synonimous lemmas in {@link NLMeaning}
      */
-    public static String SYNONYMOUS_LEMMAS = "synonymousLemmas";
+    public static final String SYNONYMOUS_LEMMAS = "synonymousLemmas";
     
     /**
      * Field name of token start offset in {@link NLToken}
      */
-    public static String SENTENCE_START_OFFSET = "sentenceStartOffset";
+    public static final String SENTENCE_START_OFFSET = "sentenceStartOffset";
 
     /**
      * Field name of token end offset in {@link NLToken}
      */
-    public static String SENTENCE_END_OFFSET = "sentenceEndOffset";
+    public static final String SENTENCE_END_OFFSET = "sentenceEndOffset";
     
     private UrlMapper urlMapper;
 
