@@ -6,7 +6,7 @@ RELEASE DOCS ARE ON THE PROJECT WEBSITE
 This release supports the following conversions:
 
   * NLText to SemText 
-  * SemText to SemanticString  
+  * SemText to SemanticString
   * SemanticString to SemText
 
 ### Maven

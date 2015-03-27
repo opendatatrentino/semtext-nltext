@@ -338,6 +338,20 @@
             <scope>test</scope>
         </dependency>               
         
+        <dependency>
+            <groupId>eu.trentorise.opendata.commons</groupId>
+            <artifactId>odt-commons-jackson</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+            <scope>test</scope>
+            <type>test-jar</type>
+        </dependency>
+        
+        <dependency>
+            <groupId>eu.trentorise.opendata.semtext</groupId>
+            <artifactId>semtext-jackson</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+            <scope>test</scope>            
+        </dependency>        
         
     </dependencies>
     

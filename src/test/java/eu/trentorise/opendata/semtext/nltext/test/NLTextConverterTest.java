@@ -1,5 +1,6 @@
 package eu.trentorise.opendata.semtext.nltext.test;
 
+import com.google.common.base.Strings;
 import eu.trentorise.opendata.commons.OdtConfig;
 import eu.trentorise.opendata.semtext.nltext.NLTextConverter;
 import eu.trentorise.opendata.semtext.nltext.UrlMapper;
@@ -26,6 +27,7 @@ import eu.trentorise.opendata.semtext.Meaning;
 import eu.trentorise.opendata.semtext.MeaningStatus;
 import eu.trentorise.opendata.semtext.SemText;
 import eu.trentorise.opendata.semtext.Term;
+import eu.trentorise.opendata.semtext.nltext.NLMeaningMetadata;
 import it.unitn.disi.sweb.core.nlp.model.NLMultiWord;
 import org.junit.After;
 import org.junit.Before;
@@ -312,6 +314,11 @@ public class NLTextConverterTest {
         Term term = st.getSentences().get(0).getTerms().get(0);
 
         assertEquals(2, term.getMeanings().size());
+        
+        NLMeaningMetadata metadata = (NLMeaningMetadata) term.getMeanings().get(0).getMetadata(NLTextConverter.NLTEXT_NAMESPACE);
+        assertEquals(Strings.nullToEmpty(sm2.getLemma()), metadata.getLemma());
+        assertEquals(Strings.nullToEmpty(sm2.getSummary()), metadata.getSummary());
+        
         if (checkedByUser){
             assertEquals(MeaningStatus.NOT_SURE, term.getMeaningStatus());    
         } else {

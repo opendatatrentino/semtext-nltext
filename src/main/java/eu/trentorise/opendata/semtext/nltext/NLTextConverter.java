@@ -3,7 +3,10 @@ package eu.trentorise.opendata.semtext.nltext;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import eu.trentorise.opendata.commons.Dict;
+import eu.trentorise.opendata.commons.LocalizedString;
+import eu.trentorise.opendata.commons.OdtUtils;
 import it.unitn.disi.sweb.core.nlp.model.NLComplexToken;
 import it.unitn.disi.sweb.core.nlp.model.NLEntityMeaning;
 import it.unitn.disi.sweb.core.nlp.model.NLMeaning;
@@ -49,6 +52,11 @@ public final class NLTextConverter {
     private static final Logger LOG = Logger.getLogger(NLTextConverter.class.getName());
 
     private static final NLTextConverter INSTANCE = new NLTextConverter();
+    
+    /**
+     * Metadata in semtext objects converted from nltext will have this namespace 
+     */
+    public static final String NLTEXT_NAMESPACE = "nltext";
 
     private UrlMapper urlMapper;
 
@@ -79,41 +87,127 @@ public final class NLTextConverter {
     }
 
     /**
-     * Returns a Dict made with the synonims preent inthe meaning. If they are
-     * absent, NLMeaning.getLemma is used instead. The method never throws, on
-     * error it just returns a Dict will less information.
+     * Returns a string as a sanitized String. On error logs a warning and
+     * returns the empty string.
+     *
+     * @param prependedLogMsg message to prepend to the warn
      */
-    public static Dict dict(@Nullable NLMeaning meaning) {
+    private static String stringToString(@Nullable String lemma, @Nullable String prependedLogMsg) {
+        if (lemma == null) {
+            LOG.log(Level.WARNING, "{0} -- Found null string, returning empty string", prependedLogMsg);
+            return "";
+        } else {
+            if (lemma.isEmpty()) {
+                LOG.log(Level.WARNING, "{0} -- Found empty lemma, returning empty string", prependedLogMsg);
+                return "";
+            }
+        }
+        return lemma;
+    }
+
+    /**
+     * Returns a string as a sanitized Dict. On error logs a warning and returns
+     * the empty dict.
+     *
+     * @param locale if unknown use {@link Locale#ROOT}
+     * @param prependedLogMsg message to prepend to the warn
+     */
+    private static Dict stringToDict(@Nullable String lemma, Locale locale, @Nullable String prependedLogMsg) {
+        checkNotNull(locale);
+        String sanitizedLemma = stringToString(lemma, prependedLogMsg);
+        if (sanitizedLemma.isEmpty()) {
+            return Dict.of();
+        } else {
+            return Dict.of(locale, sanitizedLemma);
+        }
+    }
+
+    /**
+     * Extracts a list of sanitized lemmas from the given nl sense meaning
+     *
+     * @param locale the locale of the lemmas. If unknown, use
+     * {@link Locale#ROOT}.
+     */
+    public static List<String> lemmas(NLSenseMeaning meaning, Locale locale) {
+        checkNotNull(meaning);
+
+        List<String> ret = new ArrayList();
+
+        String lemma = stringToString(meaning.getLemma(), "Error while extracting lemma from NLSenseMeaning");
+        if (!lemma.isEmpty()) {
+            ret.add(lemma);
+        }
+        Object lemmasProp = meaning.getProp(NLTextUnit.PFX, "synonymousLemmas");
+        if (lemmasProp != null) {
+            List<String> synLemmas = (List<String>) meaning.getProp(NLTextUnit.PFX, "synonymousLemmas");
+
+            if (synLemmas != null) {
+                for (String synLemma : synLemmas) {
+                    if (synLemma == null) {
+                        LOG.warning("Found null synonym in NLMeaing!");
+                    } else {
+                        if (!synLemma.equals(lemma)) {
+                            ret.add(synLemma);
+                        }
+                    }
+                }
+            }
+
+        }
+        return ret;
+    }
+
+    /**
+     * Returns a Dict made with the lemmaToString present in the meaning and
+     * eventual synonyms appended afterwords. The method never throws, on error
+     * it just returns a Dict will less information.
+     *
+     * @param locale the locale of the lemmas. If unknown, use
+     * {@link Locale#ROOT}.
+     */
+    public static Dict dictName(@Nullable NLSenseMeaning meaning, Locale locale) {
         try {
             if (meaning == null) {
                 LOG.warning("found null NLMeaning while extracting dict, returning empty Dict");
                 return Dict.of();
             }
 
-            LOG.warning("TODO - RETURNING MEANING LEMMA(S) WITH UNKNOWN LOCALE!");
+            List<String> sanitizedLemmas = new ArrayList();
+
+            String lemma = meaning.getLemma();
+            if (lemma == null) {
+                LOG.warning("found null lemma in NLMeaning while extracting dict");
+            } else {
+                if (lemma.isEmpty()) {
+                    LOG.warning("found empty lemma in NLMeaning while extracting dict");
+                } else {
+                    sanitizedLemmas.add(lemma);
+                }
+            }
 
             Object lemmasProp = meaning.getProp(NLTextUnit.PFX, "synonymousLemmas");
             if (lemmasProp != null) {
-                List<String> lemmas = (List<String>) meaning.getProp(NLTextUnit.PFX, "synonymousLemmas");
+                List<String> synLemmas = (List<String>) meaning.getProp(NLTextUnit.PFX, "synonymousLemmas");
 
-                if (lemmas != null) {
-                    List<String> sanitizedLemmas = new ArrayList();
-                    for (String lemma : lemmas) {
-                        if (lemma == null) {
+                if (synLemmas != null) {
+                    for (String synLemma : synLemmas) {
+                        if (synLemma == null) {
                             LOG.warning("Found null synonym in NLMeaing!");
                         } else {
-                            sanitizedLemmas.add(lemma);
+                            if (!synLemma.equals(lemma)) {
+                                sanitizedLemmas.add(synLemma);
+                            }
                         }
                     }
-                    return Dict.of(sanitizedLemmas);
                 }
 
             }
-            if (meaning.getLemma() == null) {
-                LOG.warning("Found NLMeaning.getLemma() = null !");
+
+            if (sanitizedLemmas.isEmpty()) {
+                LOG.warning("Found no valid lemmas to use, returning empty dict!");
                 return Dict.of();
             } else {
-                return Dict.of(meaning.getLemma());
+                return Dict.of(locale, sanitizedLemmas);
             }
         }
         catch (Exception ex) {
@@ -135,6 +229,7 @@ public final class NLTextConverter {
      */
     private static List<NLComplexToken> getMultiTokens(NLToken token) {
         List<NLComplexToken> ret = new ArrayList();
+
         if (token.isUsedInMultiWord()) {
             ret.addAll(token.getMultiWords());
         }
@@ -155,7 +250,6 @@ public final class NLTextConverter {
         }
     }
 
-
     /**
      * Converter from NLSentence to SemText Sentence.
      *
@@ -163,10 +257,12 @@ public final class NLTextConverter {
      * only includes terms for which startOffset and endOffset are defined.
      *
      * Warning: conversion may be lossy.
-     * 
-     * @param checkedByUser see {@link #semText(it.unitn.disi.sweb.core.nlp.model.NLText, boolean) }
+     *
+     * @param checkedByUser see {@link #semText(it.unitn.disi.sweb.core.nlp.model.NLText, boolean)
+     * @param locale If unknown, use {@link Locale#ROOT}
+     *
      */
-    private Sentence semTextSentence(NLSentence sentence, boolean checkedByUser) {
+    private Sentence semTextSentence(NLSentence sentence, Locale locale, boolean checkedByUser) {
 
         if (sentence == null) {
             throw new IllegalArgumentException("Cannot convert a null sentence!");
@@ -242,6 +338,7 @@ public final class NLTextConverter {
                         terms.add(semTextTerm(startOffset + mtso,
                                 startOffset + mteo,
                                 multiThing,
+                                locale,
                                 checkedByUser));
                         i += tokensSize;
                     }
@@ -250,7 +347,7 @@ public final class NLTextConverter {
                     if (t.getProp(NLTextUnit.PFX, "sentenceStartOffset") != null
                             && t.getProp(NLTextUnit.PFX, "sentenceEndOffset") != null
                             && t.getMeanings().size() > 0) {
-                        terms.add(semTextTerm(t, startOffset, checkedByUser));
+                        terms.add(semTextTerm(t, locale, startOffset, checkedByUser));
                     }
                     i += 1;
                 }
@@ -271,8 +368,8 @@ public final class NLTextConverter {
      * Warning: conversion may be lossy.
      *
      * @param checkedByUser if true, the {@code nltext} is supposed to have been
-     * reviewed entirely by a human and meaning statuses in returned {@code SemText}
-     * will be either {@link MeaningStatus#REVIEWED REVIEWED} or
+     * reviewed entirely by a human and meaning statuses in returned
+     * {@code SemText} will be either {@link MeaningStatus#REVIEWED REVIEWED} or
      * {@link MeaningStatus#NOT_SURE NOT_SURE}, otherwise the semantic string is
      * supposed to have been enriched automatically by some nlp service and
      * meaning statuses will be either {@link MeaningStatus#SELECTED SELECTED}
@@ -280,10 +377,19 @@ public final class NLTextConverter {
      *
      */
     public SemText semText(@Nullable NLText nltext, boolean checkedByUser) {
-        
+
         if (nltext == null) {
             LOG.warning("Found null NLText while converting to SemText, returning empty semtext");
             return SemText.of();
+        }
+        
+        Locale locale;
+        String lang = nltext.getLanguage();
+        if (lang == null) {
+            LOG.log(Level.WARNING, "Found null language in nltext {0}, setting Locale.ROOT", nltext.getText());
+            locale = Locale.ROOT;
+        } else {
+            locale = OdtUtils.languageTagToLocale(lang);
         }
 
         List<Sentence> sentences = new ArrayList<Sentence>();
@@ -296,7 +402,7 @@ public final class NLTextConverter {
 
                 if (so != null && eo != null) {
                     try {
-                        Sentence s = semTextSentence(nls, checkedByUser);
+                        Sentence s = semTextSentence(nls, locale, checkedByUser);
                         sentences.add(s);
                     }
                     catch (Exception ex) {
@@ -304,15 +410,7 @@ public final class NLTextConverter {
                     }
                 }
             }
-        }
-        Locale locale;
-        String lang = nltext.getLanguage();
-        if (lang == null) {
-            LOG.log(Level.WARNING, "Found null language in nltext {0}, setting Locale.ROOT", nltext.getText());
-            locale = Locale.ROOT;
-        } else {
-            locale = new Locale(lang);
-        }
+        }                
 
         return SemText.ofSentences(locale, nltext.getText(), sentences);
     }
@@ -322,9 +420,11 @@ public final class NLTextConverter {
      * throws, on error it simply returns a less meaningful... meaning and logs
      * a warning.
      *
+     * @param locale If unknown, use {@link Locale#ROOT}
+     *
      * Warning: conversion may be lossy.
      */
-    public Meaning semTextMeaning(@Nullable NLMeaning nlMeaning) {
+    public Meaning semTextMeaning(@Nullable NLMeaning nlMeaning, Locale locale) {
         try {
             if (nlMeaning == null) {
                 LOG.warning("Found null nlMeaning during conversion to SemText meaning, returning empty Meaning.of()");
@@ -334,23 +434,38 @@ public final class NLTextConverter {
             MeaningKind kind = null;
             String url = "";
             Long id;
+            Dict name;
+            Dict description;
+            
 
             if (nlMeaning instanceof NLSenseMeaning) {
+                NLSenseMeaning senseMeaning = ((NLSenseMeaning) nlMeaning);
                 kind = MeaningKind.CONCEPT;
-                id = ((NLSenseMeaning) nlMeaning).getConceptId();
+                id = senseMeaning.getConceptId();
                 if (id != null) {
                     url = urlMapper.conceptIdToUrl(id);
                 }
+                name = dictName(senseMeaning, locale);
+                description = stringToDict(senseMeaning.getDescription(), locale, "Error while extracting description from NLSenseMeaning");
+                
             } else if (nlMeaning instanceof NLEntityMeaning) {
+                NLEntityMeaning entityMeaning = ((NLEntityMeaning) nlMeaning);
                 kind = MeaningKind.ENTITY;
-                id = ((NLEntityMeaning) nlMeaning).getObjectID();
+                id = entityMeaning.getObjectID();
                 if (id != null) {
                     url = urlMapper.entityIdToUrl(id);
                 }
+                name = stringToDict(url, locale, "Error while extracting description from NLEntityMeaning");
+                description = stringToDict(entityMeaning.getDescription(), locale, "Error while extracting description from NLEntityMeaning");
             } else {
                 throw new IllegalArgumentException("Found an unsupported meaning type: " + nlMeaning.getClass().getName());
             }
-            return Meaning.of(url, kind, nlMeaning.getProbability(), dict(nlMeaning));
+            
+            NLMeaningMetadata metadata = NLMeaningMetadata.of(
+                    stringToString(nlMeaning.getLemma(), "Error while extracting lemma from NLMeaning"),
+                    stringToString(nlMeaning.getSummary(), "Error while extracting summary from NLMeaning"));
+            
+            return Meaning.of(url, kind, nlMeaning.getProbability(), name, description, ImmutableMap.of(NLTEXT_NAMESPACE, metadata));
         }
         catch (Exception ex) {
             LOG.log(Level.SEVERE, "Error while converting NLMeaning to SemText meaning, returning empty Meaning.of()", ex);
@@ -363,10 +478,10 @@ public final class NLTextConverter {
      * First element has the highest probability.
      *
      */
-    private TreeSet<Meaning> makeSortedMeanings(Set<? extends NLMeaning> meanings) {
+    private TreeSet<Meaning> makeSortedMeanings(Set<? extends NLMeaning> meanings, Locale locale) {
         TreeSet<Meaning> ts = new TreeSet<Meaning>(Collections.reverseOrder());
         for (NLMeaning m : meanings) {
-            ts.add(semTextMeaning(m));
+            ts.add(semTextMeaning(m, locale));
         }
         return ts;
     }
@@ -374,9 +489,14 @@ public final class NLTextConverter {
     /**
      * @param nlToken must have startOffset and endOffset otherwise throws
      * IllegalArgumentException
-     * @param checkedByUser see {@link #semText(it.unitn.disi.sweb.core.nlp.model.NLText, boolean) }
+     * @param locale if unknown use {@link Locale#ROOT}
+     * @param checkedByUser see {@link #semText(it.unitn.disi.sweb.core.nlp.model.NLText, boolean)
+     * }
      */
-    private Term semTextTerm(NLToken nlToken, int sentenceStartOffset, boolean checkedByUser) {
+    private Term semTextTerm(NLToken nlToken, Locale locale, int sentenceStartOffset, boolean checkedByUser) {
+
+        checkNotNull(nlToken);
+        checkNotNull(locale);
 
         checkArgument(sentenceStartOffset >= 0, "Sentence start offset can't be negative! Offset found: %s", sentenceStartOffset);
 
@@ -389,13 +509,13 @@ public final class NLTextConverter {
 
         int startOffset = sentenceStartOffset + so;
         int endOffset = sentenceStartOffset + eo;
-        TreeSet<Meaning> meanings = makeSortedMeanings(nlToken.getMeanings());
+        TreeSet<Meaning> meanings = makeSortedMeanings(nlToken.getMeanings(), locale);
 
         Meaning selectedMeaning;
         if (nlToken.getSelectedMeaning() == null) {
             selectedMeaning = null;
         } else {
-            selectedMeaning = semTextMeaning(nlToken.getSelectedMeaning());
+            selectedMeaning = semTextMeaning(nlToken.getSelectedMeaning(), locale);
         }
 
         MeaningStatus meaningStatus;
@@ -419,17 +539,19 @@ public final class NLTextConverter {
     }
 
     /**
-     * Returns the UrlMapper used by the converter.     
+     * Returns the UrlMapper used by the converter.
      */
     public UrlMapper getUrlMapper() {
         return urlMapper;
     }
 
     /**
-     * 
-     * @param checkedByUser see {@link #semText(it.unitn.disi.sweb.core.nlp.model.NLText, boolean) }
+     *
+     * @param checkedByUser see {@link #semText(it.unitn.disi.sweb.core.nlp.model.NLText, boolean)
+     * @param locale If unknown, use {@link Locale#ROOT}
+     *
      */
-    private Term semTextTerm(int startOffset, int endOffset, NLComplexToken multiThing, boolean checkedByUser) {
+    private Term semTextTerm(int startOffset, int endOffset, NLComplexToken multiThing, Locale locale, boolean checkedByUser) {
 
         Set<NLMeaning> ms = new HashSet(multiThing.getMeanings());
 
@@ -442,7 +564,7 @@ public final class NLTextConverter {
         Meaning selectedMeaning;
 
         if (ms.size() > 0) {
-            sortedMeanings = makeSortedMeanings(ms);
+            sortedMeanings = makeSortedMeanings(ms, locale);
 
             if (sortedMeanings.first().getId().isEmpty()) {
                 if (checkedByUser) {
@@ -479,5 +601,5 @@ public final class NLTextConverter {
                 endOffset,
                 meaningStatus, selectedMeaning, sortedMeanings);
     }
-
+    
 }

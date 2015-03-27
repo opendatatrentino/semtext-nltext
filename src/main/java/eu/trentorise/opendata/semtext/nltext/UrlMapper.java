@@ -25,8 +25,8 @@ import javax.annotation.concurrent.Immutable;
  *
  * @author David Leoni
  */
-@ParametersAreNonnullByDefault
 @Immutable
+@ParametersAreNonnullByDefault
 public final class UrlMapper {
 
     private static final UrlMapper INSTANCE = new UrlMapper();
