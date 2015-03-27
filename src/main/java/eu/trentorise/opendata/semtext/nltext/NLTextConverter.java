@@ -57,7 +57,22 @@ public final class NLTextConverter {
      * Metadata in semtext objects converted from nltext will have this namespace 
      */
     public static final String NLTEXT_NAMESPACE = "nltext";
+    
+    /**
+     * Field name of synonimous lemmas in {@link NLMeaning}
+     */
+    public static String SYNONYMOUS_LEMMAS = "synonymousLemmas";
+    
+    /**
+     * Field name of token start offset in {@link NLTerm}
+     */
+    public static String SENTENCE_START_OFFSET = "sentenceStartOffset";
 
+    /**
+     * Field name of token end offset in {@link NLTerm}
+     */
+    public static String SENTENCE_END_OFFSET = "sentenceEndOffset";
+    
     private UrlMapper urlMapper;
 
     private NLTextConverter() {
@@ -137,14 +152,14 @@ public final class NLTextConverter {
         if (!lemma.isEmpty()) {
             ret.add(lemma);
         }
-        Object lemmasProp = meaning.getProp(NLTextUnit.PFX, "synonymousLemmas");
+        Object lemmasProp = meaning.getProp(NLTextUnit.PFX, SYNONYMOUS_LEMMAS);
         if (lemmasProp != null) {
-            List<String> synLemmas = (List<String>) meaning.getProp(NLTextUnit.PFX, "synonymousLemmas");
+            List<String> synLemmas = (List<String>) meaning.getProp(NLTextUnit.PFX, SYNONYMOUS_LEMMAS);
 
             if (synLemmas != null) {
                 for (String synLemma : synLemmas) {
                     if (synLemma == null) {
-                        LOG.warning("Found null synonym in NLMeaing!");
+                        LOG.warning("Found null synonym in NLMeaning!");
                     } else {
                         if (!synLemma.equals(lemma)) {
                             ret.add(synLemma);
@@ -329,8 +344,8 @@ public final class NLTextConverter {
                         }
                     }
 
-                    Integer mtso = (Integer) t.getProp(NLTextUnit.PFX, "sentenceStartOffset");
-                    Integer mteo = (Integer) sentence.getTokens().get(i + tokensSize - 1).getProp(NLTextUnit.PFX, "sentenceEndOffset");
+                    Integer mtso = (Integer) t.getProp(NLTextUnit.PFX, SENTENCE_START_OFFSET);
+                    Integer mteo = (Integer) sentence.getTokens().get(i + tokensSize - 1).getProp(NLTextUnit.PFX, SENTENCE_END_OFFSET);
 
                     if (mtso == null || mteo == null) {
                         i += tokensSize;

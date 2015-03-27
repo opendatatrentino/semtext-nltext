@@ -1,6 +1,9 @@
 package eu.trentorise.opendata.semtext.nltext.test;
 
 import com.google.common.base.Strings;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
+import eu.trentorise.opendata.commons.Dict;
 import eu.trentorise.opendata.commons.OdtConfig;
 import eu.trentorise.opendata.semtext.nltext.NLTextConverter;
 import eu.trentorise.opendata.semtext.nltext.UrlMapper;
@@ -12,7 +15,6 @@ import it.unitn.disi.sweb.core.nlp.model.NLSentence;
 import it.unitn.disi.sweb.core.nlp.model.NLText;
 import it.unitn.disi.sweb.core.nlp.model.NLTextUnit;
 import it.unitn.disi.sweb.core.nlp.model.NLToken;
-
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -43,24 +45,23 @@ public class NLTextConverterTest {
     static final long TEST_CONCEPT_2_ID = 2L;
     static final long TEST_CONCEPT_3_ID = 3L;
 
-    private NLTextConverter conv;    
-   
-    
+    private NLTextConverter conv;
+
     @BeforeClass
     public static void beforeClass() {
         OdtConfig.init(NLTextConverterTest.class);
-    }    
-       
+    }
+
     @Before
-    public void beforeMethod(){
+    public void beforeMethod() {
         conv = NLTextConverter.of(UrlMapper.of("entities/", "concepts/"));
     }
-    
+
     @After
-    public void afterMethod(){
+    public void afterMethod() {
         conv = null;
     }
-    
+
     /**
      * tests one token
      */
@@ -74,7 +75,7 @@ public class NLTextConverterTest {
     }
 
     /**
-     * one token in sentence, multiple meanings
+     * one token in sentence, multiple meanings, one selected meaning
      */
     @Test
     public void testNLTextToSemText_2() {
@@ -100,24 +101,21 @@ public class NLTextConverterTest {
         sm2.setScore(5);
         sm2.setProbability((float) (5.0 / 6.0));
         meanings.add(sm2);
-                
 
         NLToken firstToken = new NLToken(dearTerm, meanings);
         firstToken.setProp(NLTextUnit.PFX, "sentenceStartOffset", 6);
         firstToken.setProp(NLTextUnit.PFX, "sentenceEndOffset", 10);
 
-        
         NLSenseMeaning nlSelectedMeaning = new NLSenseMeaning("testLemma3", 6L, "NOUN", TEST_CONCEPT_3_ID, 4, 1, "test description");
         nlSelectedMeaning.setScore(5);
-        nlSelectedMeaning.setProbability((float) (5.0 / 6.0));        
-        
+        nlSelectedMeaning.setProbability((float) (5.0 / 6.0));
+
         firstToken.setSelectedMeaning(nlSelectedMeaning);
-        
+
         sentence.addToken(firstToken);
         nltext.addSentence(sentence);
 
         SemText st = conv.semText(nltext, true);
-        
 
         assertEquals(text, st.getText());
         assertEquals(1, st.getSentences().size());
@@ -164,7 +162,7 @@ public class NLTextConverterTest {
         assertEquals(st.getSentences().size(), 1);
         assertEquals(st.getSentences().get(0).getTerms().size(), 1);
         Term word = st.getSentences().get(0).getTerms().get(0);
-        assertEquals(1, word.getMeanings().size());        
+        assertEquals(1, word.getMeanings().size());
         assertNull(word.getSelectedMeaning());
         Meaning m = word.getMeanings().get(0);
         assertEquals("", m.getId());
@@ -213,19 +211,18 @@ public class NLTextConverterTest {
 
         nltext.addSentence(sentence);
 
-        SemText st = conv.semText(nltext, true);        
+        SemText st = conv.semText(nltext, true);
 
-        assertEquals(text, st.getText() );
+        assertEquals(text, st.getText());
         assertEquals(1, st.getSentences().size());
         assertEquals(1, st.getSentences().get(0).getTerms().size());
         Term term = st.getSentences().get(0).getTerms().get(0);
         assertEquals(2, term.getMeanings().size());
-        
-        assertEquals(null, term.getSelectedMeaning());        
+
+        assertEquals(null, term.getSelectedMeaning());
     }
 
-    
-        /**
+    /**
      * tests two overlapping multiwords
      */
     @Test
@@ -233,7 +230,7 @@ public class NLTextConverterTest {
         nltextToSemText_complete(true);
         nltextToSemText_complete(false);
     }
-    
+
     /**
      * tests two overlapping multiwords
      */
@@ -263,17 +260,18 @@ public class NLTextConverterTest {
         NLSenseMeaning sm2 = new NLSenseMeaning("testLemma2", 6L, "NOUN", TEST_CONCEPT_2_ID, 4, 1, "test description");
         sm2.setScore(5);
         sm2.setProbability((float) (5.0 / 6.0));
+        sm2.setProp(NLTextUnit.PFX, NLTextConverter.SYNONYMOUS_LEMMAS, Lists.newArrayList("a", "b"));
         meanings.add(sm2);
 
         NLToken firstToken = new NLToken(text_1, meanings);
-        firstToken.setProp(NLTextUnit.PFX, "sentenceStartOffset", 0);
-        firstToken.setProp(NLTextUnit.PFX, "sentenceEndOffset", 2);
+        firstToken.setProp(NLTextUnit.PFX, NLTextConverter.SENTENCE_START_OFFSET, 0);
+        firstToken.setProp(NLTextUnit.PFX, NLTextConverter.SENTENCE_END_OFFSET, 2);
 
         sentence.addToken(firstToken);
 
         NLToken secondToken = new NLToken(text_2, meanings);
-        firstToken.setProp(NLTextUnit.PFX, "sentenceStartOffset", 1);
-        firstToken.setProp(NLTextUnit.PFX, "sentenceEndOffset", 3);
+        firstToken.setProp(NLTextUnit.PFX, NLTextConverter.SENTENCE_START_OFFSET, 1);
+        firstToken.setProp(NLTextUnit.PFX, NLTextConverter.SENTENCE_END_OFFSET, 3);
         sentence.addToken(secondToken);
 
         List<NLToken> toksMw_1 = new ArrayList();
@@ -299,47 +297,99 @@ public class NLTextConverterTest {
         toksMwString_1.add(text_3);
 
         sentence.addMultiWord(new NLMultiWord("bcd", toksMw_2, toksMwString_2));
-                        
-        // todo use NLNamedEntity
 
+        // todo use NLNamedEntity
         sentence.addToken(thirdToken);
 
         nltext.addSentence(sentence);
 
-        SemText st = conv.semText(nltext, checkedByUser);        
+        SemText st = conv.semText(nltext, checkedByUser);
 
         assertEquals(text, st.getText());
-        assertEquals(1, st.getSentences().size() );
+        assertEquals(1, st.getSentences().size());
         assertEquals(1, st.getSentences().get(0).getTerms().size());
         Term term = st.getSentences().get(0).getTerms().get(0);
 
         assertEquals(2, term.getMeanings().size());
-        
-        NLMeaningMetadata metadata = (NLMeaningMetadata) term.getMeanings().get(0).getMetadata(NLTextConverter.NLTEXT_NAMESPACE);
-        assertEquals(Strings.nullToEmpty(sm2.getLemma()), metadata.getLemma());
-        assertEquals(Strings.nullToEmpty(sm2.getSummary()), metadata.getSummary());
-        
-        if (checkedByUser){
-            assertEquals(MeaningStatus.NOT_SURE, term.getMeaningStatus());    
+
+        Meaning meaning1 = term.getMeanings().get(0);
+
+        NLMeaningMetadata metadata1 = (NLMeaningMetadata) meaning1.getMetadata(NLTextConverter.NLTEXT_NAMESPACE);
+        assertEquals(Strings.nullToEmpty(sm2.getLemma()), metadata1.getLemma());
+        assertEquals(Strings.nullToEmpty(sm2.getSummary()), metadata1.getSummary());
+
+        Dict name1 = meaning1.getName();
+        assertEquals(sm2.getLemma(), name1.string(Locale.ROOT));
+        assertEquals(3, name1.strings(Locale.ROOT).size());
+        assertEquals("a", name1.strings(Locale.ROOT).get(1));
+        assertEquals("b", name1.strings(Locale.ROOT).get(2));
+
+        assertEquals(sm2.getDescription(), meaning1.getDescription().string(Locale.ROOT));
+
+        Meaning meaning2 = term.getMeanings().get(1);
+        Dict name2 = meaning2.getName();
+        assertEquals(1, name2.strings(Locale.ROOT).size());
+        assertEquals(sm1.getLemma(), name2.string(Locale.ROOT));
+
+        if (checkedByUser) {
+            assertEquals(MeaningStatus.NOT_SURE, term.getMeaningStatus());
         } else {
             assertEquals(MeaningStatus.TO_DISAMBIGUATE, term.getMeaningStatus());
         }
-        
+
         assertEquals(null, term.getSelectedMeaning());
     }
 
-
-        @Test
-    public void exampleUsage(){
-       NLTextConverter converter = NLTextConverter.of(
-               UrlMapper.of("http://mysite.org/entities/", 
-                            "http://mysite.org/concepts/")); 
+    @Test
+    public void example1() {
+        NLTextConverter converter = NLTextConverter.of(
+                UrlMapper.of("http://mysite.org/entities/",
+                        "http://mysite.org/concepts/"));
                 // when creating semtext, string ids will have these prefixes 
-                // followed by the numerical ids of found in nltexts
-        
+        // followed by the numerical ids of found in nltexts
+
        // second parameter indicates the nltext tags are supposed to have been 
-       // entirely reviewed by a human
-       SemText semtext = converter.semText(new NLText("ciao"), true);       
+        // entirely reviewed by a human
+        SemText semtext = converter.semText(new NLText("ciao"), true);
+
+        assert semtext.getLocale().equals(Locale.ROOT); // Locale.ROOT is the default locale
+        assert semtext.getLocale().toString().equals(""); // Locale.ROOT is represented by the empty string.
+              
+    }
+    
+    
+    @Test
+    public void example2() {
+         NLTextConverter converter = NLTextConverter.of(
+                UrlMapper.of("http://mysite.org/entities/",
+                        "http://mysite.org/concepts/"));
+        SemText semtext = converter.semText(new NLText("ciao"), true);
+
+        assert semtext.getLocale().equals(Locale.ROOT); // Locale.ROOT is the default locale
+        assert semtext.getLocale().toString().equals(""); // Locale.ROOT is represented by the empty string.        
+        
+        String text = "hello Trento";
+
+        NLText nltext = new NLText(text);
+        NLSentence sentence = new NLSentence(text);
+        sentence.setProp(NLTextUnit.PFX, "startOffset", 0);
+        sentence.setProp(NLTextUnit.PFX, "endOffset", text.length());
+
+        String dearTerm = "hello";
+
+        Set<NLMeaning> meanings = new HashSet<NLMeaning>();
+
+        NLSenseMeaning sm1 = new NLSenseMeaning("testLemma1", 5L, "NOUN", TEST_CONCEPT_1_ID, 4, 1, "test description");        
+        meanings.add(sm1);
+                        
+        NLToken token = new NLToken(dearTerm, meanings);
+        token.setProp(NLTextUnit.PFX, "sentenceStartOffset", 6);
+        token.setProp(NLTextUnit.PFX, "sentenceEndOffset", 10);              
+
+        sentence.addToken(token);
+        nltext.addSentence(sentence);
+        
+        // todo
     }
 
 }
