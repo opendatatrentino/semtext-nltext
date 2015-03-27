@@ -340,56 +340,68 @@ public class NLTextConverterTest {
         assertEquals(null, term.getSelectedMeaning());
     }
 
+    /**
+     * Example that constructs an nltext of one sentence with one nltoken inside
+     * having one nlmeaning and then converts it to a SemText
+     */
     @Test
-    public void example1() {
+    public void example() {
+
         NLTextConverter converter = NLTextConverter.of(
                 UrlMapper.of("http://mysite.org/entities/",
                         "http://mysite.org/concepts/"));
-                // when creating semtext, string ids will have these prefixes 
-        // followed by the numerical ids of found in nltexts
 
-       // second parameter indicates the nltext tags are supposed to have been 
-        // entirely reviewed by a human
-        SemText semtext = converter.semText(new NLText("ciao"), true);
-
-        assert semtext.getLocale().equals(Locale.ROOT); // Locale.ROOT is the default locale
-        assert semtext.getLocale().toString().equals(""); // Locale.ROOT is represented by the empty string.
-              
-    }
-    
-    
-    @Test
-    public void example2() {
-         NLTextConverter converter = NLTextConverter.of(
-                UrlMapper.of("http://mysite.org/entities/",
-                        "http://mysite.org/concepts/"));
-        SemText semtext = converter.semText(new NLText("ciao"), true);
-
-        assert semtext.getLocale().equals(Locale.ROOT); // Locale.ROOT is the default locale
-        assert semtext.getLocale().toString().equals(""); // Locale.ROOT is represented by the empty string.        
-        
-        String text = "hello Trento";
+        String text = "hello world";
 
         NLText nltext = new NLText(text);
+
+        // NLText too has sentences:
         NLSentence sentence = new NLSentence(text);
         sentence.setProp(NLTextUnit.PFX, "startOffset", 0);
         sentence.setProp(NLTextUnit.PFX, "endOffset", text.length());
 
-        String dearTerm = "hello";
-
+        // Let's create an NLMeaning:
         Set<NLMeaning> meanings = new HashSet<NLMeaning>();
+        NLSenseMeaning nlSenseMeaning = new NLSenseMeaning("hello lemma", 1L, "NOUN", 2L, 3, 4, "hello description");
+        nlSenseMeaning.setSummary("hello summary");
+        meanings.add(nlSenseMeaning);
 
-        NLSenseMeaning sm1 = new NLSenseMeaning("testLemma1", 5L, "NOUN", TEST_CONCEPT_1_ID, 4, 1, "test description");        
-        meanings.add(sm1);
-                        
-        NLToken token = new NLToken(dearTerm, meanings);
-        token.setProp(NLTextUnit.PFX, "sentenceStartOffset", 6);
-        token.setProp(NLTextUnit.PFX, "sentenceEndOffset", 10);              
+        // An NLToken to be converted to SemText Term needs offsets:
+        NLToken token = new NLToken("hello", meanings);
+        token.setProp(NLTextUnit.PFX, "sentenceStartOffset", 0);
+        token.setProp(NLTextUnit.PFX, "sentenceEndOffset", 5);
 
         sentence.addToken(token);
         nltext.addSentence(sentence);
-        
-        // todo
+
+        // in the converter with the second parameter we specify NLTest is supposed 
+        // to have not been reviewed yet by a human:
+        SemText semText = converter.semText(nltext, false);
+
+        // Locale.ROOT is the default locale in SemText:
+        assert semText.getLocale().equals(Locale.ROOT);
+        // Locale.ROOT is represented by the empty string.
+        assert semText.getLocale().toString().equals("");
+
+        // SemText has sentences that contain terms:
+        Term term = semText.getSentences().get(0).getTerms().get(0);
+
+        // The meaning status of the term will be either TO_DISAMBIGUATE 
+        // or SELECTED as we told the converter NLText was automatically tagged 
+        // and has not been reviewed yet by a human
+        assert term.getMeaningStatus().equals(MeaningStatus.TO_DISAMBIGUATE);
+
+        // A semtext Term contains meanings:
+        Meaning meaning = term.getMeanings().get(0);
+
+        assert meaning.getName().string(Locale.ROOT).equals("hello lemma");
+        assert meaning.getDescription().string(Locale.ROOT).equals("hello description");
+
+        // NLTextConverter will include additional metadata in meanings under namespace "nltext":
+        NLMeaningMetadata metadata = (NLMeaningMetadata) meaning.getMetadata("nltext");
+        assert metadata.getLemma().equals("hello lemma");
+        assert metadata.getSummary().equals("hello summary");
+
     }
 
 }

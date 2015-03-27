@@ -26,7 +26,6 @@ import eu.trentorise.opendata.semtext.nltext.NLMeaningMetadata;
 import java.util.logging.Logger;
 import static org.junit.Assert.assertEquals;
 import eu.trentorise.opendata.semtext.jackson.SemTextModule;
-import it.unitn.disi.sweb.core.nlp.model.NLSenseMeaning;
 import java.io.IOException;
 import org.junit.After;
 import org.junit.Assert;

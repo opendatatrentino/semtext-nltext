@@ -5,7 +5,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import eu.trentorise.opendata.commons.Dict;
-import eu.trentorise.opendata.commons.LocalizedString;
 import eu.trentorise.opendata.commons.OdtUtils;
 import it.unitn.disi.sweb.core.nlp.model.NLComplexToken;
 import it.unitn.disi.sweb.core.nlp.model.NLEntityMeaning;
@@ -64,12 +63,12 @@ public final class NLTextConverter {
     public static String SYNONYMOUS_LEMMAS = "synonymousLemmas";
     
     /**
-     * Field name of token start offset in {@link NLTerm}
+     * Field name of token start offset in {@link NLToken}
      */
     public static String SENTENCE_START_OFFSET = "sentenceStartOffset";
 
     /**
-     * Field name of token end offset in {@link NLTerm}
+     * Field name of token end offset in {@link NLToken}
      */
     public static String SENTENCE_END_OFFSET = "sentenceEndOffset";
     
