@@ -4,7 +4,9 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
 import eu.trentorise.opendata.commons.Dict;
+import eu.trentorise.opendata.commons.NotFoundException;
 import eu.trentorise.opendata.commons.OdtUtils;
 import it.unitn.disi.sweb.core.nlp.model.NLComplexToken;
 import it.unitn.disi.sweb.core.nlp.model.NLEntityMeaning;
@@ -51,17 +53,28 @@ public final class NLTextConverter {
     private static final Logger LOG = Logger.getLogger(NLTextConverter.class.getName());
 
     private static final NLTextConverter INSTANCE = new NLTextConverter();
-    
+
     /**
-     * Metadata in semtext objects converted from nltext will have this namespace 
+     * Metadata in semtext objects converted from nltext will have this
+     * namespace
      */
     public static final String NLTEXT_NAMESPACE = "nltext";
-    
+
     /**
      * Field name of synonimous lemmas in {@link NLMeaning}
      */
     public static final String SYNONYMOUS_LEMMAS = "synonymousLemmas";
-    
+
+    /**
+     * Field name of sentence start offset in {@link NLSentence}
+     */
+    public static final String START_OFFSET = "startOffset";
+
+    /**
+     * Field name of sentence end offset in {@link NLSentence}
+     */
+    public static final String END_OFFSET = "endOffset";
+
     /**
      * Field name of token start offset in {@link NLToken}
      */
@@ -71,7 +84,7 @@ public final class NLTextConverter {
      * Field name of token end offset in {@link NLToken}
      */
     public static final String SENTENCE_END_OFFSET = "sentenceEndOffset";
-    
+
     private UrlMapper urlMapper;
 
     private NLTextConverter() {
@@ -172,9 +185,11 @@ public final class NLTextConverter {
     }
 
     /**
-     * Returns a Dict made with the lemmaToString present in the meaning and
-     * eventual synonyms appended afterwords. The method never throws, on error
-     * it just returns a Dict will less information.
+     * Returns a Dict made with the lemma present in the meaning and eventual
+     * synonyms appended afterwords.
+     *
+     * The method never throws, on error it just returns a Dict will less
+     * information.
      *
      * @param locale the locale of the lemmas. If unknown, use
      * {@link Locale#ROOT}.
@@ -265,6 +280,68 @@ public final class NLTextConverter {
     }
 
     /**
+     * Returns true if {@code multiTokens} contain {@code token}
+     */
+    private static boolean contain(List<NLComplexToken> multiTokens, NLComplexToken token) {
+        for (NLComplexToken tok : multiTokens) {
+            if (tok.getId() == token.getId()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     *
+     * @throws NotFoundException if the sentence start offset is missing
+     */
+    private static int sentenceStartOffset(NLToken token) {
+        Integer so = (Integer) token.getProp(NLTextUnit.PFX, SENTENCE_START_OFFSET);
+        if (so == null) {
+            throw new NotFoundException(SENTENCE_START_OFFSET + " is null in NLToken " + token);
+        }
+
+        return so;
+    }
+
+    /**
+     *
+     * @throws NotFoundException if the sentence end offset is missing
+     */
+    private static int getSentenceEndOffset(NLToken token) {
+        Integer so = (Integer) token.getProp(NLTextUnit.PFX, SENTENCE_END_OFFSET);
+        if (so == null) {
+            throw new NotFoundException(SENTENCE_END_OFFSET + " is null in NLToken " + token);
+        }
+
+        return so;
+    }
+
+    /**
+     *
+     * @throws NotFoundException if the start offset is missing
+     */
+    private static int getStartOffset(NLSentence sentence) {
+        Integer so = (Integer) sentence.getProp(NLTextUnit.PFX, START_OFFSET);
+        if (so == null) {
+            throw new NotFoundException(START_OFFSET + " is null in NLSentence " + sentence);
+        }
+        return so;
+    }
+
+    /**
+     *
+     * @throws NotFoundException if the start offset is missing
+     */
+    private static int getEndOffset(NLSentence sentence) {
+        Integer so = (Integer) sentence.getProp(NLTextUnit.PFX, END_OFFSET);
+        if (so == null) {
+            throw new NotFoundException(END_OFFSET + " is null in NLSentence " + sentence);
+        }
+        return so;
+    }
+
+    /**
      * Converter from NLSentence to SemText Sentence.
      *
      * Transforms multiwords and named entities into non-overlapping terms and
@@ -286,16 +363,13 @@ public final class NLTextConverter {
         int endOffset;
         List<Term> terms = new ArrayList<Term>();
 
-        Integer so = (Integer) sentence.getProp(NLTextUnit.PFX, "startOffset");
-        Integer eo = (Integer) sentence.getProp(NLTextUnit.PFX, "endOffset");
+        Integer so = getStartOffset(sentence);
+        Integer eo = getEndOffset(sentence);
 
-        if (so == null || eo == null) {
-            throw new IllegalArgumentException("Offsets are null! startOffset = " + so + " endOffset = " + eo);
-        }
         startOffset = so;
         endOffset = eo;
 
-        int i = 0;
+        int tokIndex = 0;
 
         List<NLToken> tokens = sentence.getTokens();
         if (tokens == null) {
@@ -303,72 +377,102 @@ public final class NLTextConverter {
             return Sentence.of(startOffset, endOffset);
         }
 
-        while (i < sentence.getTokens().size()) {
-            NLToken t = null;
+        while (tokIndex < tokens.size()) {
+            NLToken tok = null;
             try {
-                t = tokens.get(i);
+                tok = tokens.get(tokIndex);
             }
             catch (Exception ex) {
             }
 
-            if (t == null) {
-                LOG.log(Level.WARNING, "Couldn''t find token at position {0}, skipping it.", i);
-                i += 1;
+            if (tok == null) {
+                LOG.log(Level.WARNING, "Couldn''t find token at position {0}, skipping it.", tokIndex);
+                tokIndex += 1;
                 continue;
             }
 
             try {
 
-                if (t == null) {
-                    throw new IllegalArgumentException("Found null NLToken, skipping it");
+                if (terms.size() > 0) {
+                    if (Iterables.getLast(terms).getEnd() > sentenceStartOffset(tok) + startOffset) {
+                        tokIndex += 1;
+                        continue;
+                    }
                 }
 
-                if (isUsedInComplexToken(t)) {
-                    if (getMultiTokens(t).size() > 1) {
-                        LOG.warning("Found a token belonging to multiple words and/or named entities. Taking only the first one.");
-                    }
-                    if (getMultiTokens(t).isEmpty()) {
+                if (isUsedInComplexToken(tok)) {
+                    List<NLComplexToken> multiTokens = getMultiTokens(tok);
+
+                    if (multiTokens.isEmpty()) {
                         throw new IllegalArgumentException("Token should be used in multitokens, but none found. ");
                     }
 
-                    NLComplexToken multiThing = getMultiTokens(t).get(0);
+                    NLComplexToken multiToken = null;
+
+                    for (NLComplexToken candidateMultiToken : multiTokens) {
+                        if (multiToken == null) {
+                            multiToken = candidateMultiToken;
+                        } else {
+                            int candidateMultiTokenSize = candidateMultiToken.getTokens().size();
+                            int multiTokenSize = multiToken.getTokens().size();
+
+                            if (candidateMultiTokenSize > multiTokenSize) {
+                                multiToken = candidateMultiToken;
+                            }
+
+                            if (candidateMultiTokenSize == multiTokenSize) {
+
+                                if (multiToken.getSelectedMeaning() == null) {
+                                    multiToken = candidateMultiToken;
+                                } else {
+                                    if (candidateMultiToken instanceof NLNamedEntity
+                                            && candidateMultiToken.getSelectedMeaning() != null
+                                            && multiToken instanceof NLMultiWord) {
+                                        multiToken = candidateMultiToken;
+                                    }
+                                }
+                            }
+                        }
+                    }
 
                     int tokensSize = 1;
-                    for (int j = i + 1; j < sentence.getTokens().size(); j++) {
+                    for (int j = tokIndex + 1; j < sentence.getTokens().size(); j++) {
                         NLToken q = sentence.getTokens().get(j);
-                        if (!(isUsedInComplexToken(q) && getMultiTokens(q).get(0).getId() == multiThing.getId())) {
+                        if (!(isUsedInComplexToken(q)
+                                && contain(getMultiTokens(q), multiToken))) {
                             break;
                         } else {
                             tokensSize += 1;
                         }
                     }
 
-                    Integer mtso = (Integer) t.getProp(NLTextUnit.PFX, SENTENCE_START_OFFSET);
-                    Integer mteo = (Integer) sentence.getTokens().get(i + tokensSize - 1).getProp(NLTextUnit.PFX, SENTENCE_END_OFFSET);
+                    Integer mtso = (Integer) tok.getProp(NLTextUnit.PFX, SENTENCE_START_OFFSET);
+                    Integer mteo = (Integer) sentence.getTokens().get(tokIndex + tokensSize - 1).getProp(NLTextUnit.PFX, SENTENCE_END_OFFSET);
 
                     if (mtso == null || mteo == null) {
-                        i += tokensSize;
+                        tokIndex += tokensSize;
                     } else {
                         terms.add(semTextTerm(startOffset + mtso,
                                 startOffset + mteo,
-                                multiThing,
+                                multiToken,
                                 locale,
                                 checkedByUser));
-                        i += tokensSize;
+                        tokIndex += tokensSize;
                     }
 
                 } else { // not used in complex token
-                    if (t.getProp(NLTextUnit.PFX, "sentenceStartOffset") != null
-                            && t.getProp(NLTextUnit.PFX, "sentenceEndOffset") != null
-                            && t.getMeanings().size() > 0) {
-                        terms.add(semTextTerm(t, locale, startOffset, checkedByUser));
+                    if (tok.getProp(NLTextUnit.PFX, SENTENCE_START_OFFSET) != null
+                            && tok.getProp(NLTextUnit.PFX, SENTENCE_END_OFFSET) != null
+                            && (tok.getSelectedMeaning() != null
+                                || tok.getMeanings().size() > 0)) {
+                        terms.add(semTextTerm(tok, locale, startOffset, checkedByUser));
                     }
-                    i += 1;
+                    tokIndex += 1;
                 }
             }
             catch (Exception ex) {
-                LOG.log(Level.WARNING, "Error while processing token at position " + i + " with text " + t.getText() + ", skipping it.", ex);
-                i += 1;
+                LOG.log(Level.WARNING, "Error while processing token at position " + tokIndex + " with text " + tok.getText() + ", skipping it.", ex);
+                tokIndex += 1;
             }
 
         }
@@ -396,7 +500,7 @@ public final class NLTextConverter {
             LOG.warning("Found null NLText while converting to SemText, returning empty semtext");
             return SemText.of();
         }
-        
+
         Locale locale;
         String lang = nltext.getLanguage();
         if (lang == null) {
@@ -424,15 +528,17 @@ public final class NLTextConverter {
                     }
                 }
             }
-        }                
+        }
 
         return SemText.ofSentences(locale, nltext.getText(), sentences);
     }
 
     /**
-     * Converts provided NLMeaning to a semtext Meaning. This function never
-     * throws, on error it simply returns a less meaningful... meaning and logs
-     * a warning.
+     * Converts provided NLMeaning to a semtext Meaning.
+     *
+     *
+     * This function never throws, on error it simply returns a less
+     * meaningful... meaning and logs a warning.
      *
      * @param locale If unknown, use {@link Locale#ROOT}
      *
@@ -450,7 +556,6 @@ public final class NLTextConverter {
             Long id;
             Dict name;
             Dict description;
-            
 
             if (nlMeaning instanceof NLSenseMeaning) {
                 NLSenseMeaning senseMeaning = ((NLSenseMeaning) nlMeaning);
@@ -461,7 +566,7 @@ public final class NLTextConverter {
                 }
                 name = dictName(senseMeaning, locale);
                 description = stringToDict(senseMeaning.getDescription(), locale, "Error while extracting description from NLSenseMeaning");
-                
+
             } else if (nlMeaning instanceof NLEntityMeaning) {
                 NLEntityMeaning entityMeaning = ((NLEntityMeaning) nlMeaning);
                 kind = MeaningKind.ENTITY;
@@ -474,11 +579,11 @@ public final class NLTextConverter {
             } else {
                 throw new IllegalArgumentException("Found an unsupported meaning type: " + nlMeaning.getClass().getName());
             }
-            
+
             NLMeaningMetadata metadata = NLMeaningMetadata.of(
                     stringToString(nlMeaning.getLemma(), "Error while extracting lemma from NLMeaning"),
                     stringToString(nlMeaning.getSummary(), "Error while extracting summary from NLMeaning"));
-            
+
             return Meaning.of(url, kind, nlMeaning.getProbability(), name, description, ImmutableMap.of(NLTEXT_NAMESPACE, metadata));
         }
         catch (Exception ex) {
@@ -499,7 +604,7 @@ public final class NLTextConverter {
         }
         return ts;
     }
-
+    
     /**
      * @param nlToken must have startOffset and endOffset otherwise throws
      * IllegalArgumentException
@@ -526,20 +631,18 @@ public final class NLTextConverter {
         TreeSet<Meaning> meanings = makeSortedMeanings(nlToken.getMeanings(), locale);
 
         Meaning selectedMeaning;
-        if (nlToken.getSelectedMeaning() == null) {
-            selectedMeaning = null;
-        } else {
-            selectedMeaning = semTextMeaning(nlToken.getSelectedMeaning(), locale);
-        }
-
         MeaningStatus meaningStatus;
-
-        if (selectedMeaning == null) {
+        
+        if (nlToken.getSelectedMeaning() == null
+                || semTextMeaning(nlToken.getSelectedMeaning(), locale)
+                .getId().isEmpty()) {
             if (checkedByUser) {
                 meaningStatus = MeaningStatus.NOT_SURE;
             } else {
                 meaningStatus = MeaningStatus.TO_DISAMBIGUATE;
             }
+
+            selectedMeaning = null;
         } else {
             if (checkedByUser) {
                 meaningStatus = MeaningStatus.REVIEWED;
@@ -547,6 +650,7 @@ public final class NLTextConverter {
                 meaningStatus = MeaningStatus.SELECTED;
             }
 
+            selectedMeaning = semTextMeaning(nlToken.getSelectedMeaning(), locale);
         }
 
         return Term.of(startOffset, endOffset, meaningStatus, selectedMeaning, ImmutableList.copyOf(meanings));
@@ -569,40 +673,13 @@ public final class NLTextConverter {
 
         Set<NLMeaning> ms = new HashSet(multiThing.getMeanings());
 
-        if (multiThing.getMeanings().isEmpty() && multiThing.getSelectedMeaning() != null) {
-            ms.add(multiThing.getSelectedMeaning());
-        }
-
         TreeSet<Meaning> sortedMeanings;
         MeaningStatus meaningStatus;
         Meaning selectedMeaning;
-
-        if (ms.size() > 0) {
-            sortedMeanings = makeSortedMeanings(ms, locale);
-
-            if (sortedMeanings.first().getId().isEmpty()) {
-                if (checkedByUser) {
-                    meaningStatus = MeaningStatus.NOT_SURE;
-                } else {
-                    meaningStatus = MeaningStatus.TO_DISAMBIGUATE;
-                }
-
-                selectedMeaning = null;
-            } else {
-                if (checkedByUser) {
-                    meaningStatus = MeaningStatus.REVIEWED;
-                } else {
-                    meaningStatus = MeaningStatus.SELECTED;
-                }
-                selectedMeaning = sortedMeanings.first();
-            }
-
-        } else { // no meanings, but we know the kind                        
-            sortedMeanings = new TreeSet<Meaning>();
-            MeaningKind kind = getKind(multiThing);
-            if (MeaningKind.UNKNOWN != kind) {
-                sortedMeanings.add(Meaning.of("", kind, 1.0));
-            }
+        
+        if (multiThing.getSelectedMeaning() == null
+                || semTextMeaning(multiThing.getSelectedMeaning(), locale)
+                .getId().isEmpty()) {
             if (checkedByUser) {
                 meaningStatus = MeaningStatus.NOT_SURE;
             } else {
@@ -610,10 +687,37 @@ public final class NLTextConverter {
             }
 
             selectedMeaning = null;
+        } else {
+            if (checkedByUser) {
+                meaningStatus = MeaningStatus.REVIEWED;
+            } else {
+                meaningStatus = MeaningStatus.SELECTED;
+            }
+
+            selectedMeaning = semTextMeaning(multiThing.getSelectedMeaning(), locale);
+        }        
+        
+        if (ms.size() > 0) {
+            sortedMeanings = makeSortedMeanings(ms, locale);
+        } else { // no meanings, but we know the kind                        
+            sortedMeanings = new TreeSet<Meaning>();
+            MeaningKind kind = getKind(multiThing);
+            if (selectedMeaning == null
+                    && MeaningKind.UNKNOWN != kind) {
+                NLMeaningMetadata metadata = NLMeaningMetadata.of("", "");
+                sortedMeanings.add(Meaning.of(
+                        "",
+                        kind,
+                        1.0,
+                        Dict.of(),
+                        Dict.of(),
+                        ImmutableMap.of(NLTEXT_NAMESPACE, metadata)));
+            }
         }
+
         return Term.of(startOffset,
                 endOffset,
                 meaningStatus, selectedMeaning, sortedMeanings);
     }
-    
+
 }
