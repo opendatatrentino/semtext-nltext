@@ -2,6 +2,7 @@ package eu.trentorise.opendata.semtext.nltext.test;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import eu.trentorise.opendata.commons.Dict;
 import eu.trentorise.opendata.commons.OdtConfig;
@@ -37,6 +38,8 @@ import it.unitn.disi.sweb.core.nlp.model.NLMultiWord;
 import it.unitn.disi.sweb.core.nlp.model.NLNamedEntity;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import javax.annotation.Nullable;
 import org.junit.After;
 import org.junit.Before;
@@ -285,11 +288,19 @@ public class NLTextConverterTest {
         return ret;
     }
 
-    private static NLSenseMeaning nlSenseMeaning(String lemma, String description, long conceptId, float probability) {
+    /**
+     * Returns an nlsense meaning. 
+     * 
+     * @param gloss The gloss is put in {@link NLTextConverter#GLOSS_MAP} field with Italian locale. (description is left to null)
+     */
+    private static NLSenseMeaning nlSenseMeaning(String lemma, String gloss, long conceptId, float probability) {
         NLSenseMeaning ret = new NLSenseMeaning();
         ret.setLemma(lemma);
         ret.setProbability(probability);
-        ret.setDescription(description);
+
+        Map<String, String> glosses = new HashMap();
+        glosses.put("it", gloss);
+        ret.setProp(NLTextUnit.PFX, NLTextConverter.GLOSS_MAP, glosses);
         ret.setConceptId(conceptId);
         ret.setObjectID(conceptId);
         ret.setProbability(probability);
@@ -378,7 +389,7 @@ public class NLTextConverterTest {
         Dict name1 = meaning1.getName();
         assertEquals(sm2.getLemma(), name1.string(Locale.ROOT));
 
-        assertEquals(sm2.getDescription(), meaning1.getDescription().string(Locale.ROOT));
+        assertEquals(TEST_DESCRIPTION_2, meaning1.getDescription().string(Locale.ITALIAN));
 
         Meaning meaning2 = term.getMeanings().get(1);
         Dict name2 = meaning2.getName();
@@ -414,12 +425,12 @@ public class NLTextConverterTest {
                 0.2f);
 
         NLToken token = nlToken(0, 2, senseM);
-        
+
         NLText nltext = nlText("abc",
-                                token);
+                token);
         nltext.getSentences().get(0).addMultiWord(multiword(null, token));
         nltext.getSentences().get(0).addNamedEntity(namedEntity(entityM, token));
-        
+
         SemText semText = conv.semText(nltext, true);
 
         assertEquals(1, semText.terms().size());
@@ -427,8 +438,8 @@ public class NLTextConverterTest {
         assertEquals(0, t.getMeanings().size());
         Meaning m = t.getSelectedMeaning();
         assertEquals(MeaningKind.ENTITY, m.getKind());
-        assertEquals(conv.getUrlMapper().entityIdToUrl(TEST_ENTITY_1_ID), 
-                     m.getId() );
+        assertEquals(conv.getUrlMapper().entityIdToUrl(TEST_ENTITY_1_ID),
+                m.getId());
     }
 
     /**
@@ -521,7 +532,7 @@ public class NLTextConverterTest {
 
         assertEquals(1, semText.terms().size());
         Term t = semText.terms().get(0);
-        assertEquals(0, t.getMeanings().size());   
+        assertEquals(0, t.getMeanings().size());
     }
 
     /**
@@ -581,7 +592,7 @@ public class NLTextConverterTest {
         NLSenseMeaning sm2 = nlSenseMeaning(TEST_LEMMA_2, TEST_DESCRIPTION_2, TEST_CONCEPT_2_ID, 5.0f / 6.0f);
 
         NLToken tok1 = nlToken(0, 2, null, sm1, sm2);
-        NLToken tok2 = nlToken(1, 3, null, sm1, sm2);        
+        NLToken tok2 = nlToken(1, 3, null, sm1, sm2);
 
         NLText nltext = nlText(text, tok1, tok2);
         nltext.getSentences().get(0).addMultiWord(multiword(null, tok1));
@@ -662,6 +673,10 @@ public class NLTextConverterTest {
         // Let's create an NLMeaning:
         Set<NLMeaning> meanings = new HashSet<NLMeaning>();
         NLSenseMeaning nlSenseMeaning = new NLSenseMeaning("hello lemma", 1L, "NOUN", 2L, 3, 4, "hello description");
+        // NLMeanings can have glosses:
+        HashMap<String, String> glosses = new HashMap();
+        glosses.put("en", "hello gloss"); 
+        nlSenseMeaning.setProp(NLTextUnit.PFX, NLTextConverter.GLOSS_MAP, glosses);
         nlSenseMeaning.setSummary("hello summary");
         meanings.add(nlSenseMeaning);
 
@@ -694,12 +709,18 @@ public class NLTextConverterTest {
         Meaning meaning = term.getMeanings().get(0);
 
         assert meaning.getName().string(Locale.ROOT).equals("hello lemma");
-        assert meaning.getDescription().string(Locale.ROOT).equals("hello description");
+        assert meaning.getDescription().string(Locale.ENGLISH).equals("hello gloss");
 
         // NLTextConverter will include additional metadata in meanings under namespace "nltext":
         NLMeaningMetadata metadata = (NLMeaningMetadata) meaning.getMetadata("nltext");
         assert metadata.getLemma().equals("hello lemma");
         assert metadata.getSummary().equals("hello summary");
+
+    }
+
+    @Test
+    public void testMeaning() {
+        NLSenseMeaning meaning = nlSenseMeaning(TEST_LEMMA_1, TEST_DESCRIPTION_1, TEST_CONCEPT_1_ID, 0.3f);
 
     }
 

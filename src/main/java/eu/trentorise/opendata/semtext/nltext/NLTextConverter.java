@@ -35,6 +35,7 @@ import eu.trentorise.opendata.semtext.Meaning;
 import eu.trentorise.opendata.semtext.SemText;
 import eu.trentorise.opendata.semtext.Sentence;
 import eu.trentorise.opendata.semtext.Term;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -85,6 +86,11 @@ public final class NLTextConverter {
      */
     public static final String SENTENCE_END_OFFSET = "sentenceEndOffset";
 
+    /**
+     * Gloss map field name for {@link NLSenseMeaning}
+     */
+    public static final String GLOSS_MAP = "glossMap";
+
     private UrlMapper urlMapper;
 
     private NLTextConverter() {
@@ -130,6 +136,36 @@ public final class NLTextConverter {
             }
         }
         return lemma;
+    }
+
+    /**
+     * Returns a gloss hashmap as a sanitized Dict. On error logs a warning and
+     * returns the empty dict.
+     *     
+     * @param prependedLogMsg message to prepend to the warn
+     */
+    private static Dict glossToDict(NLSenseMeaning senseMeaning, @Nullable String prependedLogMsg) {
+        try {
+            Map<String, String> glosses = (Map<String, String>) senseMeaning.getProp(NLTextUnit.PFX, GLOSS_MAP);
+            if (glosses == null){
+                LOG.log(Level.WARNING, "{0}" + " -- Found null "+GLOSS_MAP+", returning empty dict", prependedLogMsg);
+                return Dict.of();
+            }
+            Dict.Builder dictb = Dict.builder();
+            
+            for (String key : glosses.keySet()){
+                Locale loc = OdtUtils.languageTagToLocale(key);
+                String string = glosses.get(key); 
+                if (string != null){
+                    dictb.put(loc, string);
+                }
+            }
+            return dictb.build();
+            
+        } catch (Exception ex){
+            LOG.log(Level.WARNING, String.valueOf(prependedLogMsg) + " -- Error while converting gloss map, returning empty dict", ex);
+            return Dict.of();
+        }
     }
 
     /**
@@ -464,7 +500,7 @@ public final class NLTextConverter {
                     if (tok.getProp(NLTextUnit.PFX, SENTENCE_START_OFFSET) != null
                             && tok.getProp(NLTextUnit.PFX, SENTENCE_END_OFFSET) != null
                             && (tok.getSelectedMeaning() != null
-                                || tok.getMeanings().size() > 0)) {
+                            || tok.getMeanings().size() > 0)) {
                         terms.add(semTextTerm(tok, locale, startOffset, checkedByUser));
                     }
                     tokIndex += 1;
@@ -565,7 +601,7 @@ public final class NLTextConverter {
                     url = urlMapper.conceptIdToUrl(id);
                 }
                 name = dictName(senseMeaning, locale);
-                description = stringToDict(senseMeaning.getDescription(), locale, "Error while extracting description from NLSenseMeaning");
+                description = glossToDict(senseMeaning, "Error while extracting description from NLSenseMeaning");
 
             } else if (nlMeaning instanceof NLEntityMeaning) {
                 NLEntityMeaning entityMeaning = ((NLEntityMeaning) nlMeaning);
@@ -604,7 +640,7 @@ public final class NLTextConverter {
         }
         return ts;
     }
-    
+
     /**
      * @param nlToken must have startOffset and endOffset otherwise throws
      * IllegalArgumentException
@@ -632,7 +668,7 @@ public final class NLTextConverter {
 
         Meaning selectedMeaning;
         MeaningStatus meaningStatus;
-        
+
         if (nlToken.getSelectedMeaning() == null
                 || semTextMeaning(nlToken.getSelectedMeaning(), locale)
                 .getId().isEmpty()) {
@@ -676,7 +712,7 @@ public final class NLTextConverter {
         TreeSet<Meaning> sortedMeanings;
         MeaningStatus meaningStatus;
         Meaning selectedMeaning;
-        
+
         if (multiThing.getSelectedMeaning() == null
                 || semTextMeaning(multiThing.getSelectedMeaning(), locale)
                 .getId().isEmpty()) {
@@ -695,8 +731,8 @@ public final class NLTextConverter {
             }
 
             selectedMeaning = semTextMeaning(multiThing.getSelectedMeaning(), locale);
-        }        
-        
+        }
+
         if (ms.size() > 0) {
             sortedMeanings = makeSortedMeanings(ms, locale);
         } else { // no meanings, but we know the kind                        
