@@ -156,26 +156,8 @@
 
 
     <dependencies>
-        
-        <!-- for nltext --> 
-        <dependency>
-            <groupId>it.unitn.disi.sweb</groupId>
-            <artifactId>scroll-model</artifactId>    
-            <version>3.0.0-SNAPSHOT</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.fasterxml.jackson.core</groupId>
-                    <artifactId>jackson-annotations</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>com.fasterxml.jackson.core</groupId>
-                    <artifactId>jackson-databind</artifactId>
-                </exclusion>
-                    
-            </exclusions>
-        </dependency>
-
-        <!-- for semanticstring -->        
+               
+        <!-- for semanticstring (also includes scroll-model)-->        
         <dependency>
             <groupId>it.unitn.disi.sweb</groupId>
             <artifactId>sweb-webapi-eb-model</artifactId>
