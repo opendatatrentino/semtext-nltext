@@ -29,14 +29,16 @@ import it.unitn.disi.sweb.webapi.model.eb.sstring.ConceptTerm;
 import it.unitn.disi.sweb.webapi.model.eb.sstring.InstanceTerm;
 import it.unitn.disi.sweb.webapi.model.eb.sstring.SemanticString;
 import it.unitn.disi.sweb.webapi.model.eb.sstring.SemanticTerm;
+import it.unitn.disi.sweb.webapi.model.eb.sstring.StringTerm;
+import it.unitn.disi.sweb.webapi.model.eb.sstring.WeightedTerm;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 import javax.annotation.concurrent.Immutable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -46,7 +48,8 @@ import org.slf4j.LoggerFactory;
 @Immutable
 public final class SemanticStringConverter {
 
-    private static final Logger LOG = LoggerFactory.getLogger(SemanticStringConverter.class);
+    
+    private static final Logger LOG = Logger.getLogger(NLTextConverter.class.getName());
 
     private static final SemanticStringConverter INSTANCE = new SemanticStringConverter();
 
@@ -99,13 +102,13 @@ public final class SemanticStringConverter {
         }
         if (MeaningKind.UNKNOWN.equals(m.getKind())
                 && m.getId().length() > 0) {
-            LOG.warn("Found meaning of kind UNKNOWN with non-empty id: {0}, skipping it !", m.getId());
+            LOG.log(Level.WARNING, "Found meaning of kind UNKNOWN with non-empty id: '{'0'}', skipping it !{0}", m.getId());
             return;
         }
         throw new IllegalArgumentException("Found not supported MeaningKind: " + m.getKind());
     }
 
-    /**
+  /**
      * Converts input semantic text into a semantic string. For each Term of
      * input semantic text a ComplexConcept holding one semantic term is
      * created. Warning: conversion may be lossy.
@@ -118,12 +121,12 @@ public final class SemanticStringConverter {
 
         for (Sentence sentence : st.getSentences()) {
             for (Term stTerm : sentence.getTerms()) {
-                List<SemanticTerm> semTerms = new ArrayList<SemanticTerm>();
-                List<ConceptTerm> concTerms = new ArrayList<ConceptTerm>();
-                List<InstanceTerm> entityTerms = new ArrayList<InstanceTerm>();
+                List<SemanticTerm> semTerms = new ArrayList();
+                List<ConceptTerm> concTerms = new ArrayList();
+                List<InstanceTerm> entityTerms = new ArrayList();
+                List<StringTerm> stringTerms = new ArrayList();
 
                 SemanticTerm semTerm = new SemanticTerm();
-
                 if (MeaningStatus.SELECTED.equals(stTerm.getMeaningStatus())
                         || MeaningStatus.REVIEWED.equals(stTerm.getMeaningStatus())) {
                     // super high prob so we're sure selected meaning gets the highest weight
@@ -138,10 +141,50 @@ public final class SemanticStringConverter {
                     }
                 }
 
+                boolean foundNLTermMetadata = false;
+                if (stTerm.hasMetadata(NLTextConverter.NLTEXT_NAMESPACE)) {
+                    Object metadataObj = stTerm.getMetadata(NLTextConverter.NLTEXT_NAMESPACE);
+
+                    if (metadataObj instanceof NLTermMetadata) {
+                        
+                        foundNLTermMetadata = true;
+                        NLTermMetadata nlTermMetadata = (NLTermMetadata) metadataObj;
+                        for (String derivedLemma : nlTermMetadata.getDerivedLemmas()) {
+                            StringTerm stringTerm = new StringTerm();
+                            stringTerm.setValue(derivedLemma);
+                            stringTerm.setWeight(1.0);
+                            stringTerms.add(stringTerm);
+                        }
+
+                        for (String stem : nlTermMetadata.getStems()) {
+                            StringTerm stringTerm = new StringTerm();
+                            stringTerm.setValue(stem);
+                            stringTerm.setWeight(1.0);
+                            stringTerms.add(stringTerm);
+                        }
+
+                    } else {
+                        LOG.log(Level.FINE, "Expected instance of {0}" + " in metadata of namespace " + NLTextConverter.NLTEXT_NAMESPACE + " for {1}, found instead object {2}, resulting SemanticString might not be properly indexable", new Object[]{NLTermMetadata.class.getName(), stTerm, metadataObj});                        
+                    }
+
+                } else {
+                    LOG.log(Level.FINE, "Couldn''t find metadata in namespace "+  NLTextConverter.NLTEXT_NAMESPACE + " for {0}, resulting SemanticString might not be properly indexable", stTerm);
+                }
+
+                
+                if (!foundNLTermMetadata){
+                    StringTerm wholeText = new StringTerm();
+                    wholeText.setValue(st.getText(stTerm));
+                    wholeText.setWeight(1.0);
+                    stringTerms.add(wholeText);                    
+                }
+                
+
                 semTerm.setOffset(stTerm.getStart());
                 semTerm.setText(st.getText(stTerm));
                 semTerm.setConceptTerms(concTerms);
                 semTerm.setInstanceTerms(entityTerms);
+                semTerm.setStringTerms(stringTerms);
 
                 semTerms.add(semTerm);
                 ComplexConcept cc = new ComplexConcept(semTerms);
@@ -151,7 +194,7 @@ public final class SemanticStringConverter {
 
         return new SemanticString(st.getText(), complexConcepts);
     }
-
+  
     /**
      * Converts provided semantic string to a semantic text. Semantic text terms
      * meaning statuses will be deducted using the
@@ -163,15 +206,16 @@ public final class SemanticStringConverter {
      *
      * @param checkedByUser if true, the semantic string {@code ss} is supposed
      * to have been reviewed entirely by a human and meaning statuses in
-     * returned {@code SemText} will be either {@link MeaningStatus#REVIEWED REVIEWED}
-     * or {@link MeaningStatus#NOT_SURE NOT_SURE}, otherwise the semantic string
-     * is supposed to have been enriched automatically by some nlp service and
+     * returned {@code SemText} will be either
+     * {@link MeaningStatus#REVIEWED REVIEWED} or
+     * {@link MeaningStatus#NOT_SURE NOT_SURE}, otherwise the semantic string is
+     * supposed to have been enriched automatically by some nlp service and
      * meaning statuses will be either {@link MeaningStatus#SELECTED SELECTED}
      * or {@link MeaningStatus#TO_DISAMBIGUATE TO_DISAMBIGUATE}.
      */
     public SemText semText(@Nullable SemanticString ss, boolean checkedByUser) {
         if (ss == null) {
-            LOG.warn("Found null semantic string, returning empty SemText");
+            LOG.warning("Found null semantic string, returning empty SemText");
             return SemText.of();
         }
 
@@ -184,7 +228,7 @@ public final class SemanticStringConverter {
         }
 
         List<Sentence> sentences = new ArrayList<Sentence>();
-        List<Term> words = new ArrayList<Term>();
+        List<Term> terms = new ArrayList<Term>();
 
         int pos = 0;
         if (ss.getComplexConcepts() != null) {
@@ -219,7 +263,7 @@ public final class SemanticStringConverter {
                                         meaningStatus = MeaningStatus.SELECTED;
                                     }
                                 }
-                                words.add(Term.of(st.getOffset(),
+                                terms.add(Term.of(st.getOffset(),
                                         st.getOffset() + st.getText().length(),
                                         meaningStatus,
                                         selectedMeaning,
@@ -233,7 +277,7 @@ public final class SemanticStringConverter {
             }
         }
 
-        sentences.add(Sentence.of(0, text.length(), words));
+        sentences.add(Sentence.of(0, text.length(), terms));
 
         return SemText.ofSentences(Locale.ROOT, text, sentences);
     }
@@ -288,5 +332,6 @@ public final class SemanticStringConverter {
         }
         return retb.build();
     }
+
 
 }

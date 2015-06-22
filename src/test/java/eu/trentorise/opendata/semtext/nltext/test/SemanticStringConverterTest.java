@@ -15,6 +15,8 @@
  */
 package eu.trentorise.opendata.semtext.nltext.test;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import eu.trentorise.opendata.commons.OdtConfig;
 import eu.trentorise.opendata.semtext.nltext.SemanticStringConverter;
 import eu.trentorise.opendata.semtext.nltext.UrlMapper;
@@ -24,6 +26,8 @@ import eu.trentorise.opendata.semtext.MeaningStatus;
 import eu.trentorise.opendata.semtext.SemText;
 import eu.trentorise.opendata.semtext.Sentence;
 import eu.trentorise.opendata.semtext.Term;
+import eu.trentorise.opendata.semtext.nltext.NLTermMetadata;
+import eu.trentorise.opendata.semtext.nltext.NLTextConverter;
 import it.unitn.disi.sweb.webapi.model.eb.sstring.ComplexConcept;
 import it.unitn.disi.sweb.webapi.model.eb.sstring.ConceptTerm;
 import it.unitn.disi.sweb.webapi.model.eb.sstring.InstanceTerm;
@@ -268,29 +272,63 @@ public class SemanticStringConverterTest {
         assertEquals(ss.getComplexConcepts().size(), 0);
     }
 
+    /**
+     * <pre>
+     *      hello dear world
+     *      11111               term1 (with NLTermMetadata)
+     *            2222          term2 (without metadata)
+     * </pre>
+     */
     @Test
     public void testSemTextToSemanticString_4() {
-        long concID = 4;
+        long concId = 4;
+        long entId = 5;
         String text = "hello dear world";
         List<Sentence> sentences = new ArrayList<Sentence>();
 
         sentences.add(Sentence.of(0, text.length(),
+                Term.of(0,
+                        5,
+                        MeaningStatus.SELECTED,
+                        Meaning.of(conv.getUrlMapper().conceptIdToUrl(concId),
+                                MeaningKind.CONCEPT,
+                                0.3),
+                        ImmutableList.<Meaning>of(),                        
+                        ImmutableMap.of(NLTextConverter.NLTEXT_NAMESPACE, 
+                                        NLTermMetadata.of(ImmutableList.of("S"), 
+                                                          ImmutableList.of("L")))),
                 Term.of(6,
                         10,
                         MeaningStatus.SELECTED,
-                        Meaning.of(conv.getUrlMapper().conceptIdToUrl(concID),
-                                MeaningKind.CONCEPT,
+                        Meaning.of(conv.getUrlMapper().entityIdToUrl(entId),
+                                MeaningKind.ENTITY,
                                 0.3))));
+                
 
         SemText st = SemText.ofSentences(Locale.ITALIAN, text, sentences);
 
         SemanticString ss = conv.semanticString(st);
 
         assertEquals(text, ss.getText());
-        assertEquals(1, ss.getComplexConcepts().size());
-        assertEquals(1, ss.getComplexConcepts().get(0).getTerms().size());
-        assertEquals(1, ss.getComplexConcepts().get(0).getTerms().get(0).getConceptTerms().size());
-        assertEquals((long) ss.getComplexConcepts().get(0).getTerms().get(0).getConceptTerms().get(0).getValue(),
-                concID);
+        assertEquals(2, ss.getComplexConcepts().size());
+        
+        ComplexConcept cc_1 = ss.getComplexConcepts().get(0);
+        SemanticTerm t1 = cc_1.getTerms().get(0);
+        assertEquals(1, cc_1.getTerms().size());
+        assertEquals(1, t1.getConceptTerms().size());
+        assertEquals((long) t1.getConceptTerms().get(0).getValue(),
+                concId);
+        assertEquals("L", t1.getStringTerms().get(0).getValue());
+                        
+
+        ComplexConcept cc_2 = ss.getComplexConcepts().get(1);
+        SemanticTerm t2 = cc_2.getTerms().get(0);
+
+        assertEquals(1, cc_2.getTerms().size());
+        assertEquals(1, t2.getInstanceTerms().size());
+        assertEquals((long) t2.getInstanceTerms().get(0).getValue(),
+                entId);
+        assertEquals("dear", t2.getStringTerms().get(0).getValue());                
+        
     }
 }

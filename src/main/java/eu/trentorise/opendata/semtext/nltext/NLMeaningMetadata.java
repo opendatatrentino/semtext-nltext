@@ -31,10 +31,12 @@ import javax.annotation.concurrent.Immutable;
 @ParametersAreNonnullByDefault
 public final class NLMeaningMetadata implements Serializable {
 
+    private static final NLMeaningMetadata INSTANCE = new NLMeaningMetadata();
+    
     private static final long serialVersionUID = 1L;
 
     private String lemma;
-    private String summary;
+    private String summary;    
 
     private NLMeaningMetadata() {
         this.lemma = "";
@@ -61,6 +63,7 @@ public final class NLMeaningMetadata implements Serializable {
         this.summary = summary;
     }
 
+ 
     /**
      * Returns the lemma of the meaning. It will be in the same language of the
      * whole SemText containing it.
@@ -91,9 +94,9 @@ public final class NLMeaningMetadata implements Serializable {
 
     @Override
     public int hashCode() {
-        int hash = 3;
-        hash = 19 * hash + (this.lemma != null ? this.lemma.hashCode() : 0);
-        hash = 19 * hash + (this.summary != null ? this.summary.hashCode() : 0);
+        int hash = 7;
+        hash = 47 * hash + (this.lemma != null ? this.lemma.hashCode() : 0);
+        hash = 47 * hash + (this.summary != null ? this.summary.hashCode() : 0);
         return hash;
     }
 
@@ -114,5 +117,13 @@ public final class NLMeaningMetadata implements Serializable {
         }
         return true;
     }
+
+
+    /**
+     * Returns an NLMeaningMetadata with empty fields.
+     */
+    public static NLMeaningMetadata of(){
+        return INSTANCE;
+    }    
 
 }

@@ -42,7 +42,10 @@ import javax.annotation.ParametersAreNonnullByDefault;
 import javax.annotation.concurrent.Immutable;
 
 /**
- * Class to convert SemText to/from NLText and SemanticString.
+ * Class to convert SemText to/from NLText
+ *
+ * Conversion will attach {@link NLMeaningMetadata} to meanings and
+ * {@link NLTermMetadata} to terms.
  *
  * @author David Leoni
  *
@@ -125,44 +128,45 @@ public final class NLTextConverter {
      *
      * @param prependedLogMsg message to prepend to the warn
      */
-    private static String stringToString(@Nullable String lemma, @Nullable String prependedLogMsg) {
-        if (lemma == null) {
-            LOG.log(Level.WARNING, "{0} -- Found null string, returning empty string", prependedLogMsg);
+    private static String stringToString(@Nullable String string, @Nullable String prependedLogMsg) {
+        if (string == null) {
+            LOG.log(Level.WARNING, "{0} -- Found null string", prependedLogMsg);
             return "";
         } else {
-            if (lemma.isEmpty()) {
-                LOG.log(Level.WARNING, "{0} -- Found empty lemma, returning empty string", prependedLogMsg);
+            if (string.isEmpty()) {
+                LOG.log(Level.WARNING, "{0} -- Found empty string", prependedLogMsg);
                 return "";
             }
         }
-        return lemma;
+        return string;
     }
 
     /**
      * Returns a gloss hashmap as a sanitized Dict. On error logs a warning and
      * returns the empty dict.
-     *     
+     *
      * @param prependedLogMsg message to prepend to the warn
      */
     private static Dict glossToDict(NLSenseMeaning senseMeaning, @Nullable String prependedLogMsg) {
         try {
             Map<String, String> glosses = (Map<String, String>) senseMeaning.getProp(NLTextUnit.PFX, GLOSS_MAP);
-            if (glosses == null){
-                LOG.log(Level.WARNING, "{0}" + " -- Found null "+GLOSS_MAP+", returning empty dict", prependedLogMsg);
+            if (glosses == null) {
+                LOG.log(Level.WARNING, "{0}" + " -- Found null " + GLOSS_MAP + ", returning empty dict", prependedLogMsg);
                 return Dict.of();
             }
             Dict.Builder dictb = Dict.builder();
-            
-            for (String key : glosses.keySet()){
+
+            for (String key : glosses.keySet()) {
                 Locale loc = OdtUtils.languageTagToLocale(key);
-                String string = glosses.get(key); 
-                if (string != null){
+                String string = glosses.get(key);
+                if (string != null) {
                     dictb.put(loc, string);
                 }
             }
             return dictb.build();
-            
-        } catch (Exception ex){
+
+        }
+        catch (Exception ex) {
             LOG.log(Level.WARNING, String.valueOf(prependedLogMsg) + " -- Error while converting gloss map, returning empty dict", ex);
             return Dict.of();
         }
@@ -196,7 +200,7 @@ public final class NLTextConverter {
 
         List<String> ret = new ArrayList();
 
-        String lemma = stringToString(meaning.getLemma(), "Error while extracting lemma from NLSenseMeaning");
+        String lemma = stringToString(meaning.getLemma(), "Found invalid lemma in NLSenseMeaning");
         if (!lemma.isEmpty()) {
             ret.add(lemma);
         }
@@ -517,7 +521,9 @@ public final class NLTextConverter {
     }
 
     /**
-     * Converts provided {@code nltext} to a semantic text. <br/>
+     * Converts provided {@code nltext} to a semantic text. Conversion will
+     * attach {@link NLMeaningMetadata} to meanings and {@link NLTermMetadata}
+     * to terms. <br/>
      * <br/>
      * Warning: conversion may be lossy.
      *
@@ -569,6 +575,25 @@ public final class NLTextConverter {
         return SemText.ofSentences(locale, nltext.getText(), sentences);
     }
 
+    private List<String> stringsToStrings(@Nullable Iterable<String> strings, @Nullable String prependedLogMsg) {
+        if (strings == null) {
+            LOG.log(Level.WARNING, "{0} -- Found null strings", prependedLogMsg);
+            return new ArrayList();
+        }
+
+        List<String> ret = new ArrayList();
+        for (String string : strings) {
+            if (string == null) {
+                LOG.log(Level.WARNING,
+                        "{0} -- Found null string, skipping it", prependedLogMsg);
+            } else {
+                ret.add(string);
+            }
+        }
+        return ret;
+
+    }
+
     /**
      * Converts provided NLMeaning to a semtext Meaning.
      *
@@ -617,8 +642,8 @@ public final class NLTextConverter {
             }
 
             NLMeaningMetadata metadata = NLMeaningMetadata.of(
-                    stringToString(nlMeaning.getLemma(), "Error while extracting lemma from NLMeaning"),
-                    stringToString(nlMeaning.getSummary(), "Error while extracting summary from NLMeaning"));
+                    stringToString(nlMeaning.getLemma(), "invalid lemma in NLMeaning"),
+                    stringToString(nlMeaning.getSummary(), "invalid summary in NLMeaning"));
 
             return Meaning.of(url, kind, nlMeaning.getProbability(), name, description, ImmutableMap.of(NLTEXT_NAMESPACE, metadata));
         }
@@ -633,7 +658,10 @@ public final class NLTextConverter {
      * First element has the highest probability.
      *
      */
-    private TreeSet<Meaning> makeSortedMeanings(Set<? extends NLMeaning> meanings, Locale locale) {
+    private TreeSet<Meaning> makeSortedMeanings(
+            Set<? extends NLMeaning> meanings,
+            Locale locale) {
+
         TreeSet<Meaning> ts = new TreeSet<Meaning>(Collections.reverseOrder());
         for (NLMeaning m : meanings) {
             ts.add(semTextMeaning(m, locale));
@@ -648,7 +676,10 @@ public final class NLTextConverter {
      * @param checkedByUser see {@link #semText(it.unitn.disi.sweb.core.nlp.model.NLText, boolean)
      * }
      */
-    private Term semTextTerm(NLToken nlToken, Locale locale, int sentenceStartOffset, boolean checkedByUser) {
+    private Term semTextTerm(NLToken nlToken,
+            Locale locale,
+            int sentenceStartOffset,
+            boolean checkedByUser) {
 
         checkNotNull(nlToken);
         checkNotNull(locale);
@@ -664,7 +695,10 @@ public final class NLTextConverter {
 
         int startOffset = sentenceStartOffset + so;
         int endOffset = sentenceStartOffset + eo;
-        TreeSet<Meaning> meanings = makeSortedMeanings(nlToken.getMeanings(), locale);
+        TreeSet<Meaning> meanings = makeSortedMeanings(
+                nlToken.getMeanings(),
+                locale
+        );
 
         Meaning selectedMeaning;
         MeaningStatus meaningStatus;
@@ -689,7 +723,26 @@ public final class NLTextConverter {
             selectedMeaning = semTextMeaning(nlToken.getSelectedMeaning(), locale);
         }
 
-        return Term.of(startOffset, endOffset, meaningStatus, selectedMeaning, ImmutableList.copyOf(meanings));
+        List<String> sanitizedStems = new ArrayList();
+        String sanitizedStem = stringToString(nlToken.getDerivedStem(), "Found invalid stem in NLToken!");
+        if (!sanitizedStem.isEmpty()) {
+            sanitizedStems.add(sanitizedStem);
+        }
+        String sanitizedText = stringToString(nlToken.getText(), "Found invalid text in NLToken");
+        if (!sanitizedText.isEmpty()) {
+            sanitizedStems.add(sanitizedText);
+        }
+        List<String> sanitizedDerivedLemmas = stringsToStrings(nlToken.getDerivedLemmas(), "Found invalid derived lemma in nltoken!");
+
+        return Term.of(
+                startOffset,
+                endOffset,
+                meaningStatus,
+                selectedMeaning,
+                ImmutableList.copyOf(meanings),
+                ImmutableMap.of(NLTEXT_NAMESPACE,
+                        NLTermMetadata.of(sanitizedStems, sanitizedDerivedLemmas)
+                ));
     }
 
     /**
@@ -705,12 +758,17 @@ public final class NLTextConverter {
      * @param locale If unknown, use {@link Locale#ROOT}
      *
      */
-    private Term semTextTerm(int startOffset, int endOffset, NLComplexToken multiThing, Locale locale, boolean checkedByUser) {
+    private Term semTextTerm(int startOffset,
+            int endOffset,
+            NLComplexToken multiThing,
+            Locale locale,
+            boolean checkedByUser) {
 
         Set<NLMeaning> ms = new HashSet(multiThing.getMeanings());
 
         TreeSet<Meaning> sortedMeanings;
         MeaningStatus meaningStatus;
+        @Nullable
         Meaning selectedMeaning;
 
         if (multiThing.getSelectedMeaning() == null
@@ -730,7 +788,9 @@ public final class NLTextConverter {
                 meaningStatus = MeaningStatus.SELECTED;
             }
 
-            selectedMeaning = semTextMeaning(multiThing.getSelectedMeaning(), locale);
+            selectedMeaning = semTextMeaning(
+                    multiThing.getSelectedMeaning(),
+                    locale);
         }
 
         if (ms.size() > 0) {
@@ -751,9 +811,15 @@ public final class NLTextConverter {
             }
         }
 
+        List<String> sanitizedDerivedLemmas = stringsToStrings(multiThing.getDerivedLemmas(), "Found invalid derived lemma in NLComplexToken!");
+
         return Term.of(startOffset,
                 endOffset,
-                meaningStatus, selectedMeaning, sortedMeanings);
+                meaningStatus,
+                selectedMeaning,
+                sortedMeanings,
+                ImmutableMap.of(NLTEXT_NAMESPACE, NLTermMetadata.of(new ArrayList(),
+                                sanitizedDerivedLemmas)));
     }
 
 }

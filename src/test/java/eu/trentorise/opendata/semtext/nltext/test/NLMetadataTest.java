@@ -18,6 +18,7 @@ package eu.trentorise.opendata.semtext.nltext.test;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.NullNode;
+import com.google.common.collect.ImmutableList;
 import eu.trentorise.opendata.commons.OdtConfig;
 
 import static eu.trentorise.opendata.commons.test.jackson.OdtJacksonTester.changeField;
@@ -26,6 +27,7 @@ import eu.trentorise.opendata.semtext.nltext.NLMeaningMetadata;
 import java.util.logging.Logger;
 import static org.junit.Assert.assertEquals;
 import eu.trentorise.opendata.semtext.jackson.SemTextModule;
+import eu.trentorise.opendata.semtext.nltext.NLTermMetadata;
 import java.io.IOException;
 import org.junit.After;
 import org.junit.Assert;
@@ -80,12 +82,74 @@ public class NLMetadataTest {
         }
 
     }
+    
+    
+    @Test
+    public void testNLTokenJackson() throws IOException {
+        testJsonConv(objectMapper, LOG, NLTermMetadata.of(ImmutableList.of("S"), ImmutableList.of("L")));
+
+        String json = changeField(  objectMapper, 
+                                     LOG, 
+                                     NLTermMetadata.of(ImmutableList.of("S"), ImmutableList.of("L")),
+                                    "stems", 
+                                    NullNode.instance);
+
+        try {
+            objectMapper.readValue(json, NLTermMetadata.class);
+            Assert.fail("Should have failed before!");
+        }
+        catch (JsonMappingException ex) {
+
+        }
+
+    }
+    
 
     @Test
-    public void testMetadata() {
+    public void testNLTokenMetadata() {
+        assertEquals(ImmutableList.of("S"), NLTermMetadata.of(ImmutableList.of("S"), ImmutableList.of("L")).getStems());
+        assertEquals(ImmutableList.of("L"), NLTermMetadata.of(ImmutableList.of("S"), ImmutableList.of("L")).getDerivedLemmas());        
+
+        try {
+            NLTermMetadata.of(null, ImmutableList.<String>of());
+            Assert.fail();
+        }
+        catch (NullPointerException ex) {
+
+        }
+
+        try {
+            NLTermMetadata.of(ImmutableList.<String>of(), null);
+            Assert.fail();
+        }
+        catch (NullPointerException ex) {
+
+        }
+        
+    }
+    
+    @Test
+    @SuppressWarnings({"ObjectEqualsNull", "IncompatibleEquals"})
+    public void testNLMeaningEquality() {
+        assertEquals(NLTermMetadata.of(ImmutableList.of("S"), ImmutableList.of("L")),                
+                    NLTermMetadata.of(ImmutableList.of("S"), ImmutableList.of("L")));
+        
+        assertEquals(NLTermMetadata.of(ImmutableList.of("S"), ImmutableList.of("L")).hashCode(), 
+                NLTermMetadata.of(ImmutableList.of("S"), ImmutableList.of("L")).hashCode());
+        
+        assertNotEquals(NLTermMetadata.of(ImmutableList.of("S"), ImmutableList.of("L")), 
+                NLTermMetadata.of(ImmutableList.of("S"), ImmutableList.of("G")));
+        assertFalse(NLTermMetadata.of(ImmutableList.of("S"), ImmutableList.of("L")).equals(null));
+        assertFalse(NLTermMetadata.of(ImmutableList.of("S"), ImmutableList.of("L")).equals("c"));
+        
+    }    
+    
+    @Test
+    public void testNLMeaningMetadata() {
         assertEquals("a", NLMeaningMetadata.of("a", "b").getLemma());
         assertEquals("b", NLMeaningMetadata.of("a", "b").getSummary());
 
+        
         try {
             NLMeaningMetadata.of(null, "");
             Assert.fail();
@@ -105,7 +169,7 @@ public class NLMetadataTest {
 
     @Test
     @SuppressWarnings({"ObjectEqualsNull", "IncompatibleEquals"})
-    public void testEquality() {
+    public void testNLTokenEquality() {
         assertEquals(NLMeaningMetadata.of("a", "b"), NLMeaningMetadata.of("a", "b"));
         
         assertEquals(NLMeaningMetadata.of("a", "b").hashCode(), NLMeaningMetadata.of("a", "b").hashCode());

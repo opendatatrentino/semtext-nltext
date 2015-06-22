@@ -1,6 +1,8 @@
 package eu.trentorise.opendata.semtext.nltext.test;
 
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -29,6 +31,7 @@ import eu.trentorise.opendata.semtext.MeaningStatus;
 import eu.trentorise.opendata.semtext.SemText;
 import eu.trentorise.opendata.semtext.Term;
 import eu.trentorise.opendata.semtext.nltext.NLMeaningMetadata;
+import eu.trentorise.opendata.semtext.nltext.NLTermMetadata;
 import static eu.trentorise.opendata.semtext.nltext.NLTextConverter.END_OFFSET;
 import static eu.trentorise.opendata.semtext.nltext.NLTextConverter.SENTENCE_END_OFFSET;
 import static eu.trentorise.opendata.semtext.nltext.NLTextConverter.SENTENCE_START_OFFSET;
@@ -36,9 +39,9 @@ import static eu.trentorise.opendata.semtext.nltext.NLTextConverter.START_OFFSET
 import it.unitn.disi.sweb.core.nlp.model.NLEntityMeaning;
 import it.unitn.disi.sweb.core.nlp.model.NLMultiWord;
 import it.unitn.disi.sweb.core.nlp.model.NLNamedEntity;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 import org.junit.After;
@@ -536,11 +539,11 @@ public class NLTextConverterTest {
     }
 
     /**
-     * Tests metadata from meaning is correctly generated
+     * Tests metadata for meaning and token is correctly generated
      * <pre>
-     * 0123
-     * abc
-     * ab       tok1
+     *      0123
+     *      abc
+     *      ab       tok1
      * </pre>
      */
     @Test
@@ -551,6 +554,10 @@ public class NLTextConverterTest {
 
         NLToken tok1 = nlToken(0, 2, null, sm);
 
+        
+        tok1.setDerivedLemmas(ImmutableSet.of("L1", "L2"));
+        tok1.setDerivedStem("S1");
+        
         NLText nltext = nlText(text, tok1);
 
         SemText st = conv.semText(nltext, true);
@@ -559,6 +566,10 @@ public class NLTextConverterTest {
         assertEquals(1, st.getSentences().get(0).getTerms().size());
         Term term = st.getSentences().get(0).getTerms().get(0);
 
+        NLTermMetadata termMetadata = (NLTermMetadata) term.getMetadata(NLTextConverter.NLTEXT_NAMESPACE);
+        assertEquals(termMetadata.getDerivedLemmas(), ImmutableList.of("L1", "L2"));
+        assertEquals(termMetadata.getStems(), ImmutableList.of("S1", "ab"));
+        
         assertEquals("ab", st.getText(term));
 
         assertEquals(1, term.getMeanings().size());
@@ -705,6 +716,12 @@ public class NLTextConverterTest {
         // and has not been reviewed yet by a human
         assert term.getMeaningStatus().equals(MeaningStatus.TO_DISAMBIGUATE);
 
+        // NLTextConverter will include additional metadata in terms under namespace "nltext":
+        NLTermMetadata termMetadata = (NLTermMetadata) term.getMetadata("nltext");
+        assert termMetadata.getDerivedLemmas().equals(Arrays.asList());
+        assert termMetadata.getStems().equals(Arrays.asList("hello"));
+        
+        
         // A semtext Term contains meanings:
         Meaning meaning = term.getMeanings().get(0);
 
@@ -712,9 +729,9 @@ public class NLTextConverterTest {
         assert meaning.getDescription().string(Locale.ENGLISH).equals("hello gloss");
 
         // NLTextConverter will include additional metadata in meanings under namespace "nltext":
-        NLMeaningMetadata metadata = (NLMeaningMetadata) meaning.getMetadata("nltext");
-        assert metadata.getLemma().equals("hello lemma");
-        assert metadata.getSummary().equals("hello summary");
+        NLMeaningMetadata meaningMetadata = (NLMeaningMetadata) meaning.getMetadata("nltext");
+        assert meaningMetadata.getLemma().equals("hello lemma");
+        assert meaningMetadata.getSummary().equals("hello summary");
 
     }
 
