@@ -30,7 +30,6 @@ import it.unitn.disi.sweb.webapi.model.eb.sstring.InstanceTerm;
 import it.unitn.disi.sweb.webapi.model.eb.sstring.SemanticString;
 import it.unitn.disi.sweb.webapi.model.eb.sstring.SemanticTerm;
 import it.unitn.disi.sweb.webapi.model.eb.sstring.StringTerm;
-import it.unitn.disi.sweb.webapi.model.eb.sstring.WeightedTerm;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;

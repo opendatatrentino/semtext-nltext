@@ -348,7 +348,7 @@ public final class NLTextConverter {
      *
      * @throws NotFoundException if the sentence end offset is missing
      */
-    private static int getSentenceEndOffset(NLToken token) {
+    private static int sentenceEndOffset(NLToken token) {
         Integer so = (Integer) token.getProp(NLTextUnit.PFX, SENTENCE_END_OFFSET);
         if (so == null) {
             throw new NotFoundException(SENTENCE_END_OFFSET + " is null in NLToken " + token);
@@ -433,11 +433,11 @@ public final class NLTextConverter {
 
             try {
 
-                if (terms.size() > 0) {
-                    if (Iterables.getLast(terms).getEnd() > sentenceStartOffset(tok) + startOffset) {
-                        tokIndex += 1;
-                        continue;
-                    }
+                if (terms.size() > 0
+                        && Iterables.getLast(terms).getEnd() > sentenceStartOffset(tok) + startOffset) {
+                    tokIndex += 1;
+                    continue;
+                    
                 }
 
                 if (isUsedInComplexToken(tok)) {
