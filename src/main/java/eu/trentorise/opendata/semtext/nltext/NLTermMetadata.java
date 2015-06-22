@@ -19,11 +19,18 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.common.collect.ImmutableList;
 import java.io.Serializable;
 import java.util.List;
+import javax.annotation.ParametersAreNonnullByDefault;
+import javax.annotation.concurrent.Immutable;
 
 /**
+ * Metadata associated to a SemText
+ * {@link eu.trentorise.opendata.semtext.Term} when converting from
+ * {@link it.unitn.disi.sweb.core.nlp.model.NLToken}
  *
  * @author David Leoni
  */
+@Immutable
+@ParametersAreNonnullByDefault
 public class NLTermMetadata implements Serializable {
 
     private static final NLTermMetadata INSTANCE = new NLTermMetadata();

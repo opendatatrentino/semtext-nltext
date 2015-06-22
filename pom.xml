@@ -32,7 +32,7 @@
     <parent>
         <groupId>eu.trentorise.opendata.commons</groupId>
         <artifactId>odt-super-pom</artifactId>
-        <version>1.1.0</version>
+        <version>1.2.0</version>
     </parent>
 
     <scm>   
@@ -161,7 +161,7 @@
         <dependency>
             <groupId>it.unitn.disi.sweb</groupId>
             <artifactId>sweb-webapi-eb-model</artifactId>
-            <version>3.0.1-SNAPSHOT</version>      
+            <version>3.0.1-RELEASE</version>      
             <exclusions>
                 <exclusion>
                     <groupId>com.fasterxml.jackson.core</groupId>
@@ -178,7 +178,6 @@
         <dependency>
             <groupId>eu.trentorise.opendata.semtext</groupId>
             <artifactId>semtext</artifactId>
-            <version>1.0.0</version>
         </dependency>                                                                              
      
         <!-- *****************************   STUFF FOR TESTING ********************************  -->
@@ -186,21 +185,13 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.12</version>
             <scope>test</scope>
         </dependency>
         
         <dependency>
             <groupId>pl.pragmatists</groupId>
             <artifactId>JUnitParams</artifactId>
-            <version>1.0.4</version>
             <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>junit</groupId>
-                    <artifactId>junit</artifactId>
-                </exclusion>
-            </exclusions>  
         </dependency>               
         
         <dependency>
@@ -213,8 +204,7 @@
         
         <dependency>
             <groupId>eu.trentorise.opendata.semtext</groupId>
-            <artifactId>semtext-jackson</artifactId>
-            <version>1.0.0</version>
+            <artifactId>semtext-jackson</artifactId>            
             <scope>test</scope>            
         </dependency>        
         
