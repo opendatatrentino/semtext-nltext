@@ -192,6 +192,11 @@ public class NLMetadataTest {
     
     @Test
     public void testCompleteSemtextJackson() throws IOException {
+        
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        SemTextModule.registerModulesInto(objectMapper);
+        
         SemTextModule.registerMetadata(Meaning.class, NLTextConverter.NLTEXT_NAMESPACE, NLMeaningMetadata.class);
         SemTextModule.registerMetadata(Term.class, NLTextConverter.NLTEXT_NAMESPACE, NLTermMetadata.class);        
         
