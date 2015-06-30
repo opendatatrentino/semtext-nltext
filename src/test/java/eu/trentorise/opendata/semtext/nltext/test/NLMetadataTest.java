@@ -93,17 +93,16 @@ public class NLMetadataTest {
         }
 
     }
-    
-    
+
     @Test
     public void testNLTokenJackson() throws IOException {
         testJsonConv(objectMapper, LOG, NLTermMetadata.of(ImmutableList.of("S"), ImmutableList.of("L")));
 
-        String json = changeField(  objectMapper, 
-                                     LOG, 
-                                     NLTermMetadata.of(ImmutableList.of("S"), ImmutableList.of("L")),
-                                    "stems", 
-                                    NullNode.instance);
+        String json = changeField(objectMapper,
+                LOG,
+                NLTermMetadata.of(ImmutableList.of("S"), ImmutableList.of("L")),
+                "stems",
+                NullNode.instance);
 
         try {
             objectMapper.readValue(json, NLTermMetadata.class);
@@ -114,12 +113,11 @@ public class NLMetadataTest {
         }
 
     }
-    
 
     @Test
     public void testNLTokenMetadata() {
         assertEquals(ImmutableList.of("S"), NLTermMetadata.of(ImmutableList.of("S"), ImmutableList.of("L")).getStems());
-        assertEquals(ImmutableList.of("L"), NLTermMetadata.of(ImmutableList.of("S"), ImmutableList.of("L")).getDerivedLemmas());        
+        assertEquals(ImmutableList.of("L"), NLTermMetadata.of(ImmutableList.of("S"), ImmutableList.of("L")).getDerivedLemmas());
 
         try {
             NLTermMetadata.of(null, ImmutableList.<String>of());
@@ -136,31 +134,30 @@ public class NLMetadataTest {
         catch (NullPointerException ex) {
 
         }
-        
+
     }
-    
+
     @Test
     @SuppressWarnings({"ObjectEqualsNull", "IncompatibleEquals"})
     public void testNLMeaningEquality() {
-        assertEquals(NLTermMetadata.of(ImmutableList.of("S"), ImmutableList.of("L")),                
-                    NLTermMetadata.of(ImmutableList.of("S"), ImmutableList.of("L")));
-        
-        assertEquals(NLTermMetadata.of(ImmutableList.of("S"), ImmutableList.of("L")).hashCode(), 
+        assertEquals(NLTermMetadata.of(ImmutableList.of("S"), ImmutableList.of("L")),
+                NLTermMetadata.of(ImmutableList.of("S"), ImmutableList.of("L")));
+
+        assertEquals(NLTermMetadata.of(ImmutableList.of("S"), ImmutableList.of("L")).hashCode(),
                 NLTermMetadata.of(ImmutableList.of("S"), ImmutableList.of("L")).hashCode());
-        
-        assertNotEquals(NLTermMetadata.of(ImmutableList.of("S"), ImmutableList.of("L")), 
+
+        assertNotEquals(NLTermMetadata.of(ImmutableList.of("S"), ImmutableList.of("L")),
                 NLTermMetadata.of(ImmutableList.of("S"), ImmutableList.of("G")));
         assertFalse(NLTermMetadata.of(ImmutableList.of("S"), ImmutableList.of("L")).equals(null));
         assertFalse(NLTermMetadata.of(ImmutableList.of("S"), ImmutableList.of("L")).equals("c"));
-        
-    }    
-    
+
+    }
+
     @Test
     public void testNLMeaningMetadata() {
         assertEquals("a", NLMeaningMetadata.of("a", "b").getLemma());
         assertEquals("b", NLMeaningMetadata.of("a", "b").getSummary());
 
-        
         try {
             NLMeaningMetadata.of(null, "");
             Assert.fail();
@@ -182,60 +179,65 @@ public class NLMetadataTest {
     @SuppressWarnings({"ObjectEqualsNull", "IncompatibleEquals"})
     public void testNLTokenEquality() {
         assertEquals(NLMeaningMetadata.of("a", "b"), NLMeaningMetadata.of("a", "b"));
-        
+
         assertEquals(NLMeaningMetadata.of("a", "b").hashCode(), NLMeaningMetadata.of("a", "b").hashCode());
         assertNotEquals(NLMeaningMetadata.of("a", "b"), NLMeaningMetadata.of("a", "c"));
         assertFalse(NLMeaningMetadata.of("a", "b").equals(null));
         assertFalse(NLMeaningMetadata.of("a", "b").equals("c"));
-        
+
     }
-    
-    
+
+    /**
+     * Serializes with Jackson a SemText with text "Town of Arco",
+     * where term 'Arco' is tagged with meaning ENTITY but as other possible
+     * meaning has 'bow'. Both term Arco and meanings have attached additional
+     * metadata coming from nltext.
+     *
+     */
     @Test
     public void jacksonExample() throws IOException {
-        
+
         ObjectMapper objectMapper = new ObjectMapper();
 
         SemTextModule.registerModulesInto(objectMapper);
-        
+
         SemTextModule.registerMetadata(Meaning.class, NLTextConverter.NLTEXT_NAMESPACE, NLMeaningMetadata.class);
-        SemTextModule.registerMetadata(Term.class, NLTextConverter.NLTEXT_NAMESPACE, NLTermMetadata.class);        
-        
+        SemTextModule.registerMetadata(Term.class, NLTextConverter.NLTEXT_NAMESPACE, NLTermMetadata.class);
+
         NLTermMetadata nlTermMetadata = NLTermMetadata.of(ImmutableList.of("mystem1", "mystem2"),
-                                                          ImmutableList.of("myderived lemma 1", "myderived lemma 2"));                
+                ImmutableList.of("myderived lemma 1", "myderived lemma 2"));
         String text = "Town of Arco";
-        
+
         Meaning selectedMeaning = Meaning.of(
                 "123",
                 MeaningKind.ENTITY,
                 0.2,
                 Dict.builder().put(Locale.ITALIAN, "Comune di Arco")
-                              .put(Locale.ENGLISH, "Arco town").build(),
+                .put(Locale.ENGLISH, "Arco town").build(),
                 Dict.of(Locale.ENGLISH, "A beatiful town in Trentino"),
                 ImmutableMap.of("nltext", NLMeaningMetadata.of("my lemma", "my summary")));
-        
+
         Meaning otherMeaning = Meaning.of(
                 "123",
                 MeaningKind.CONCEPT,
                 0.2,
                 Dict.builder().put(Locale.ITALIAN, "arco")
-                                .put(Locale.ENGLISH, "bow").build(),
+                .put(Locale.ENGLISH, "bow").build(),
                 Dict.of(Locale.ENGLISH, "a weapon to be used with arrows"),
                 ImmutableMap.of("nltext", NLMeaningMetadata.of("my lemma", "my summary")));
-        
+
         Term term = Term.of(
-                            8, 
-                            12, 
-                            MeaningStatus.SELECTED, 
-                            selectedMeaning, 
-                            ImmutableList.of(otherMeaning), 
-                            ImmutableMap.of("nltext",nlTermMetadata));
-        
+                8,
+                12,
+                MeaningStatus.SELECTED,
+                selectedMeaning,
+                ImmutableList.of(otherMeaning),
+                ImmutableMap.of("nltext", nlTermMetadata));
+
         Sentence sentence = Sentence.of(0, 12, term);
-        
+
         System.out.println(objectMapper.writeValueAsString(SemText.of(Locale.ENGLISH, text, sentence)));
-        
+
     }
-        
 
 }
