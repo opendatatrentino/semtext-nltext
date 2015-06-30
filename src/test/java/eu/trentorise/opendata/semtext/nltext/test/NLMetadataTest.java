@@ -19,16 +19,26 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import eu.trentorise.opendata.commons.Dict;
 import eu.trentorise.opendata.commons.OdtConfig;
+import eu.trentorise.opendata.commons.test.jackson.OdtJacksonTester;
 
 import static eu.trentorise.opendata.commons.test.jackson.OdtJacksonTester.changeField;
 import static eu.trentorise.opendata.commons.test.jackson.OdtJacksonTester.testJsonConv;
+import eu.trentorise.opendata.semtext.Meaning;
+import eu.trentorise.opendata.semtext.MeaningKind;
+import eu.trentorise.opendata.semtext.MeaningStatus;
+import eu.trentorise.opendata.semtext.SemText;
+import eu.trentorise.opendata.semtext.Term;
 import eu.trentorise.opendata.semtext.nltext.NLMeaningMetadata;
 import java.util.logging.Logger;
 import static org.junit.Assert.assertEquals;
 import eu.trentorise.opendata.semtext.jackson.SemTextModule;
 import eu.trentorise.opendata.semtext.nltext.NLTermMetadata;
+import eu.trentorise.opendata.semtext.nltext.NLTextConverter;
 import java.io.IOException;
+import java.util.Locale;
 import org.junit.After;
 import org.junit.Assert;
 import static org.junit.Assert.assertFalse;
@@ -178,5 +188,45 @@ public class NLMetadataTest {
         assertFalse(NLMeaningMetadata.of("a", "b").equals("c"));
         
     }
+    
+    
+    @Test
+    public void testCompleteSemtextJackson() throws IOException {
+        SemTextModule.registerMetadata(Meaning.class, NLTextConverter.NLTEXT_NAMESPACE, NLMeaningMetadata.class);
+        SemTextModule.registerMetadata(Term.class, NLTextConverter.NLTEXT_NAMESPACE, NLTermMetadata.class);        
+        
+        NLTermMetadata nlTermMetadata = NLTermMetadata.of(ImmutableList.of("mystem1", "mystem2"),
+                                                          ImmutableList.of("myderived lemma 1", "myderived lemma 2"));                
+        String text = "Town of Arco";
+        
+        Meaning selectedMeaning = Meaning.of(
+                "123",
+                MeaningKind.ENTITY,
+                0.2,
+                Dict.builder().put(Locale.ITALIAN, "Comune di Arco")
+                              .put(Locale.ENGLISH, "Arco town").build(),
+                Dict.of(Locale.ENGLISH, "A beatiful town in Trentino"),
+                ImmutableMap.of("nltext", NLMeaningMetadata.of("my lemma", "my summary")));
+        
+        Meaning otherMeaning = Meaning.of(
+                "123",
+                MeaningKind.CONCEPT,
+                0.2,
+                Dict.builder().put(Locale.ITALIAN, "arco")
+                                .put(Locale.ENGLISH, "bow").build(),
+                Dict.of(Locale.ENGLISH, "a weapon to be used with arrows"),
+                ImmutableMap.of("nltext", NLMeaningMetadata.of("my lemma", "my summary")));
+        
+        Term term = Term.of(
+                            8, 
+                            12, 
+                            MeaningStatus.SELECTED, 
+                            selectedMeaning, 
+                            ImmutableList.of(otherMeaning), 
+                            ImmutableMap.of("nltext",nlTermMetadata));
+        
+        OdtJacksonTester.testJsonConv(objectMapper, LOG, SemText.of(Locale.ENGLISH, text, term));
+    }
+        
 
 }
