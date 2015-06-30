@@ -30,6 +30,7 @@ import eu.trentorise.opendata.semtext.Meaning;
 import eu.trentorise.opendata.semtext.MeaningKind;
 import eu.trentorise.opendata.semtext.MeaningStatus;
 import eu.trentorise.opendata.semtext.SemText;
+import eu.trentorise.opendata.semtext.Sentence;
 import eu.trentorise.opendata.semtext.Term;
 import eu.trentorise.opendata.semtext.nltext.NLMeaningMetadata;
 import java.util.logging.Logger;
@@ -191,7 +192,7 @@ public class NLMetadataTest {
     
     
     @Test
-    public void testCompleteSemtextJackson() throws IOException {
+    public void jacksonExample() throws IOException {
         
         ObjectMapper objectMapper = new ObjectMapper();
 
@@ -230,7 +231,10 @@ public class NLMetadataTest {
                             ImmutableList.of(otherMeaning), 
                             ImmutableMap.of("nltext",nlTermMetadata));
         
-        OdtJacksonTester.testJsonConv(objectMapper, LOG, SemText.of(Locale.ENGLISH, text, term));
+        Sentence sentence = Sentence.of(0, 12, term);
+        
+        System.out.println(objectMapper.writeValueAsString(SemText.of(Locale.ENGLISH, text, sentence)));
+        
     }
         
 
