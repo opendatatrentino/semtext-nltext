@@ -156,7 +156,7 @@
 
 
     <dependencies>
-               
+                
         <!-- for semanticstring (also includes scroll-model)-->        
         <dependency>
             <groupId>it.unitn.disi.sweb</groupId>
@@ -174,7 +174,7 @@
                     
             </exclusions>                  
         </dependency>
-        
+                
         <dependency>
             <groupId>eu.trentorise.opendata.semtext</groupId>
             <artifactId>semtext</artifactId>
@@ -197,9 +197,9 @@
         <dependency>
             <groupId>eu.trentorise.opendata.commons</groupId>
             <artifactId>odt-commons-jackson</artifactId>
-            <version>1.0.2</version>
             <scope>test</scope>
-            <type>test-jar</type>
+            <type>test-jar</type>     
+            <version>1.0.2</version>       
         </dependency>
         
         <dependency>

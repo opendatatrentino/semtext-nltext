@@ -133,12 +133,12 @@ public final class SemanticStringConverter {
                     addMeaning(stTerm.getSelectedMeaning(), 5.0, concTerms, entityTerms);
                 }
 
-                for (Meaning m : stTerm.getMeanings()) {
+                for (Meaning m : stTerm.getMeanings()) {                    
                     Meaning selMeaning = stTerm.getSelectedMeaning();
-                    if (selMeaning != null
-                            && !m.getId().equals(selMeaning.getId())) {
-                        addMeaning(m, m.getProbability(), concTerms, entityTerms);
-                    }
+                    boolean sameAsSelMeaning = selMeaning != null && selMeaning.getId().equals(m.getId());
+                    if (!"".equals(m.getId()) && !sameAsSelMeaning){
+                        addMeaning(m, m.getProbability(), concTerms, entityTerms);                            
+                    }                                                                                                        
                 }
 
                 boolean foundNLTermMetadata = false;
