@@ -27,7 +27,7 @@ import eu.trentorise.opendata.semtext.Term;
 import eu.trentorise.opendata.semtext.nltext.NLTermMetadata;
 import eu.trentorise.opendata.semtext.nltext.NLTextConverter;
 import eu.trentorise.opendata.semtext.nltext.SemanticStringConverter;
-import eu.trentorise.opendata.semtext.nltext.UrlMapper;
+import eu.trentorise.opendata.disiclient.UrlMapper;
 import it.unitn.disi.sweb.webapi.model.eb.sstring.ComplexConcept;
 import it.unitn.disi.sweb.webapi.model.eb.sstring.SemanticString;
 import it.unitn.disi.sweb.webapi.model.eb.sstring.SemanticTerm;
@@ -60,7 +60,7 @@ public class SemTextToSemanticStringTest {
 
     @Before
     public void beforeMethod() {
-        conv = SemanticStringConverter.of(UrlMapper.of("entities/", "concepts/"));
+        conv = SemanticStringConverter.of(UrlMapper.of());
     }
 
     @After
@@ -86,7 +86,7 @@ public class SemTextToSemanticStringTest {
 
     @Test
     public void test3() {
-        List<Sentence> sentences = new ArrayList<Sentence>();
+        List<Sentence> sentences = new ArrayList();
         sentences.add(Sentence.of(0, 4));
         SemText st = SemText.ofSentences(Locale.ITALIAN, "ciao", sentences);
         SemanticString ss = conv.semanticString(st);

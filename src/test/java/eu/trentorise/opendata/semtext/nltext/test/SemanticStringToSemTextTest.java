@@ -20,7 +20,7 @@ import eu.trentorise.opendata.semtext.MeaningStatus;
 import eu.trentorise.opendata.semtext.SemText;
 import eu.trentorise.opendata.semtext.Term;
 import eu.trentorise.opendata.semtext.nltext.SemanticStringConverter;
-import eu.trentorise.opendata.semtext.nltext.UrlMapper;
+import eu.trentorise.opendata.disiclient.UrlMapper;
 import it.unitn.disi.sweb.webapi.model.eb.sstring.ComplexConcept;
 import it.unitn.disi.sweb.webapi.model.eb.sstring.ConceptTerm;
 import it.unitn.disi.sweb.webapi.model.eb.sstring.InstanceTerm;
@@ -53,7 +53,7 @@ public class SemanticStringToSemTextTest {
 
     @Before
     public void beforeMethod() {
-        conv = SemanticStringConverter.of(UrlMapper.of("entities/", "concepts/"));
+        conv = SemanticStringConverter.of(UrlMapper.of());
     }
 
     @After
@@ -84,7 +84,7 @@ public class SemanticStringToSemTextTest {
 
     @Test
     public void test_2() {
-        List<ComplexConcept> ccs = new ArrayList<ComplexConcept>();
+        List<ComplexConcept> ccs = new ArrayList();
         ccs.add(new ComplexConcept());
         SemanticString ss = new SemanticString("ciao", ccs);
         SemText st = conv.semText(ss, true);
@@ -96,8 +96,8 @@ public class SemanticStringToSemTextTest {
 
     @Test
     public void test_3() {
-        List<ComplexConcept> ccs = new ArrayList<ComplexConcept>();
-        List<SemanticTerm> sts = new ArrayList<SemanticTerm>();
+        List<ComplexConcept> ccs = new ArrayList();
+        List<SemanticTerm> sts = new ArrayList();
         ccs.add(new ComplexConcept(sts));
         SemanticString ss = new SemanticString("ciao", ccs);
         SemText st = conv.semText(ss, true);
@@ -109,8 +109,8 @@ public class SemanticStringToSemTextTest {
 
     @Test
     public void test_4() {
-        List<ComplexConcept> ccs = new ArrayList<ComplexConcept>();
-        List<SemanticTerm> sts = new ArrayList<SemanticTerm>();
+        List<ComplexConcept> ccs = new ArrayList();
+        List<SemanticTerm> sts = new ArrayList();
         sts.add(new SemanticTerm());
         ccs.add(new ComplexConcept(sts));
         SemanticString ss = new SemanticString("ciao", ccs);
@@ -123,8 +123,8 @@ public class SemanticStringToSemTextTest {
 
     @Test
     public void test_5() {
-        List<ComplexConcept> ccs = new ArrayList<ComplexConcept>();
-        List<SemanticTerm> sts = new ArrayList<SemanticTerm>();
+        List<ComplexConcept> ccs = new ArrayList();
+        List<SemanticTerm> sts = new ArrayList();
         sts.add(new SemanticTerm("dear", 6));
         ccs.add(new ComplexConcept(sts));
         SemanticString ss = new SemanticString("hello dear world", ccs);
@@ -137,12 +137,12 @@ public class SemanticStringToSemTextTest {
 
     @Test
     public void test_6() {
-        List<ComplexConcept> ccs = new ArrayList<ComplexConcept>();
-        List<SemanticTerm> sts = new ArrayList<SemanticTerm>();
+        List<ComplexConcept> ccs = new ArrayList();
+        List<SemanticTerm> sts = new ArrayList();
 
-        List<ConceptTerm> concTerms = new ArrayList<ConceptTerm>();
-        List<InstanceTerm> entityTerms = new ArrayList<InstanceTerm>();
-        List<StringTerm> stringTerms = new ArrayList<StringTerm>();
+        List<ConceptTerm> concTerms = new ArrayList();
+        List<InstanceTerm> entityTerms = new ArrayList();
+        List<StringTerm> stringTerms = new ArrayList();
 
         sts.add(new SemanticTerm("dear", 6, concTerms, stringTerms, entityTerms));
         ccs.add(new ComplexConcept(sts));
@@ -156,16 +156,16 @@ public class SemanticStringToSemTextTest {
 
     @Test
     public void test_7() {
-        List<ComplexConcept> ccs = new ArrayList<ComplexConcept>();
-        List<SemanticTerm> sts = new ArrayList<SemanticTerm>();
+        List<ComplexConcept> ccs = new ArrayList();
+        List<SemanticTerm> sts = new ArrayList();
 
-        List<ConceptTerm> concTerms = new ArrayList<ConceptTerm>();
+        List<ConceptTerm> concTerms = new ArrayList();
         concTerms.add(new ConceptTerm());
 
-        List<InstanceTerm> entityTerms = new ArrayList<InstanceTerm>();
+        List<InstanceTerm> entityTerms = new ArrayList();
         entityTerms.add(new InstanceTerm());
 
-        List<StringTerm> stringTerms = new ArrayList<StringTerm>();
+        List<StringTerm> stringTerms = new ArrayList();
 
         sts.add(new SemanticTerm("dear", 6, concTerms, stringTerms, entityTerms));
         ccs.add(new ComplexConcept(sts));
@@ -184,22 +184,22 @@ public class SemanticStringToSemTextTest {
     }
 
     public void semanticStringToSemText_complete(boolean checkedByUser) {
-    List<ComplexConcept> ccs = new ArrayList<ComplexConcept>();
-        List<SemanticTerm> sts = new ArrayList<SemanticTerm>();
+    List<ComplexConcept> ccs = new ArrayList();
+        List<SemanticTerm> sts = new ArrayList();
 
-        List<ConceptTerm> concTerms = new ArrayList<ConceptTerm>();
+        List<ConceptTerm> concTerms = new ArrayList();
         ConceptTerm ct = new ConceptTerm();
         ct.setValue(1L);
         ct.setWeight(0.1);
         concTerms.add(ct);
 
-        List<InstanceTerm> entityTerms = new ArrayList<InstanceTerm>();
+        List<InstanceTerm> entityTerms = new ArrayList();
         InstanceTerm it = new InstanceTerm();
         it.setValue(2L);
         it.setWeight(5.0);        
         entityTerms.add(it);
 
-        List<StringTerm> stringTerms = new ArrayList<StringTerm>();
+        List<StringTerm> stringTerms = new ArrayList();
 
         sts.add(new SemanticTerm("dear", 6, concTerms, stringTerms, entityTerms));
         ccs.add(new ComplexConcept(sts));

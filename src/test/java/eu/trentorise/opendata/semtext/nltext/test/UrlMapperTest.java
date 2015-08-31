@@ -14,54 +14,109 @@
  * limitations under the License.
  */
 package eu.trentorise.opendata.semtext.nltext.test;
-
-import eu.trentorise.opendata.commons.OdtConfig;
-import eu.trentorise.opendata.semtext.nltext.UrlMapper;
+import eu.trentorise.opendata.disiclient.UrlMapper;
+import org.junit.After;
+import org.junit.Assert;
 import static org.junit.Assert.assertEquals;
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
  * @author David Leoni
  */
 public class UrlMapperTest {
-    
-    @BeforeClass
-    public static void beforeClass(){
-        OdtConfig.init(UrlMapperTest.class);
+
+    private static final Logger LOG = LoggerFactory.getLogger(UrlMapperTest.class);
+
+    public static String BASE = "http://entitybase.org";
+    private UrlMapper m;
+
+    @Before
+    public void before() {
+        m = UrlMapper.of(BASE);
     }
-    
-    @Test
-    public void testNullPrefixes(){
-        try{
-            UrlMapper.of(null, "");
-        } catch(NullPointerException ex){
-            
-        }
-        try{
-            UrlMapper.of("", null);
-        } catch(NullPointerException ex){
-            
-        }
-                        
+
+    @After
+    public void after() {
+        m = null;
     }
 
     @Test
-    public void testEmptyPrefixes(){
-        UrlMapper um = UrlMapper.of("","");
-        assertEquals("3",um.entityIdToUrl(3L));
-        assertEquals(3,um.urlToEntityId("3"));
-        assertEquals("3",um.conceptIdToUrl(3L));
-        assertEquals(3,um.urlToConceptId("3"));        
-    }    
-    
-    @Test
-    public void testNonEmptyPrefixes(){
-        UrlMapper um = UrlMapper.of("a","b");        
-        assertEquals("a3",um.entityIdToUrl(3L));
-        assertEquals(3,um.urlToEntityId("a3"));
-        assertEquals("b3",um.conceptIdToUrl(3L));
-        assertEquals(3,um.urlToConceptId("b3"));        
+    public void testAttrDef() {
+        assertEquals(1L, m.attrDefUrlToId(m.attrDefIdToUrl(1L, 2L)));
+        assertEquals(2L, m.attrDefUrlToConceptId(m.attrDefIdToUrl(1L, 2L)));
+        assertEquals(-1L, m.attrDefUrlToId(m.attrDefIdToUrl(-1L, -1L)));
+        try {
+            m.attrDefIdToUrl(-1L, 5L);
+            Assert.fail();
+        }
+        catch (IllegalArgumentException ex) {
+
+        }
+
+        try {
+            m.attrDefIdToUrl(null, 5L);
+            Assert.fail();
+        }
+        catch (IllegalArgumentException ex) {
+
+        }
+
+        try {
+            m.attrDefIdToUrl(1L, null);
+            Assert.fail();
+        }
+        catch (IllegalArgumentException ex) {
+
+        }
     }
+
+    @Test
+    public void testConcept() {
+        assertEquals(1L, m.conceptUrlToId(m.conceptIdToUrl(1L)));        
+        assertEquals(-1L, m.conceptUrlToId(m.conceptIdToUrl(-1L)));
+
+        try {
+            m.conceptIdToUrl(null);
+            Assert.fail();
+        }
+        catch (IllegalArgumentException ex) {
+
+        }
+
+    }
+
+    @Test
+    public void testEtype() {
+        assertEquals(1L, m.etypeUrlToId(m.etypeIdToUrl(1L)));        
+        assertEquals(-1L, m.etypeUrlToId(m.etypeIdToUrl(-1L)));
+        try {
+            m.etypeIdToUrl(null);
+            Assert.fail();
+        }
+        catch (IllegalArgumentException ex) {
+
+        }
+
+       
+    }
+
+    @Test
+    public void testEntity() {
+        assertEquals(1L, m.entityUrlToId(m.entityIdToUrl(1L)));
+        assertEquals(-1L, m.entityUrlToId(m.entityIdToUrl(-1L)));
+
+        try {
+            m.entityIdToUrl(null);
+            Assert.fail();
+        }
+        catch (IllegalArgumentException ex) {
+
+        }
+
+    }
+
 }

@@ -8,6 +8,7 @@ import com.google.common.collect.Iterables;
 import eu.trentorise.opendata.commons.Dict;
 import eu.trentorise.opendata.commons.NotFoundException;
 import eu.trentorise.opendata.commons.OdtUtils;
+import eu.trentorise.opendata.disiclient.UrlMapper;
 import it.unitn.disi.sweb.core.nlp.model.NLComplexToken;
 import it.unitn.disi.sweb.core.nlp.model.NLEntityMeaning;
 import it.unitn.disi.sweb.core.nlp.model.NLMeaning;

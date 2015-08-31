@@ -17,6 +17,7 @@ package eu.trentorise.opendata.semtext.nltext;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.common.collect.ImmutableList;
+import eu.trentorise.opendata.disiclient.UrlMapper;
 import eu.trentorise.opendata.semtext.Meaning;
 import eu.trentorise.opendata.semtext.MeaningKind;
 import eu.trentorise.opendata.semtext.MeaningStatus;
@@ -30,7 +31,6 @@ import it.unitn.disi.sweb.webapi.model.eb.sstring.InstanceTerm;
 import it.unitn.disi.sweb.webapi.model.eb.sstring.SemanticString;
 import it.unitn.disi.sweb.webapi.model.eb.sstring.SemanticTerm;
 import it.unitn.disi.sweb.webapi.model.eb.sstring.StringTerm;
-import it.unitn.disi.sweb.webapi.model.eb.sstring.WeightedTerm;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -95,7 +95,7 @@ public final class SemanticStringConverter {
         }
         if (MeaningKind.ENTITY.equals(m.getKind())) {
             InstanceTerm entityTerm = new InstanceTerm();
-            entityTerm.setValue(urlMapper.urlToEntityId(m.getId()));
+            entityTerm.setValue(urlMapper.entityUrlToId(m.getId()));
             entityTerm.setWeight(probability);
             entityTerms.add(entityTerm);
             return;
@@ -117,7 +117,7 @@ public final class SemanticStringConverter {
      * @return a semantic string representation of input semantic text
      */
     public SemanticString semanticString(SemText st) {
-        List<ComplexConcept> complexConcepts = new ArrayList<ComplexConcept>();
+        List<ComplexConcept> complexConcepts = new ArrayList();
 
         for (Sentence sentence : st.getSentences()) {
             for (Term stTerm : sentence.getTerms()) {
@@ -227,8 +227,8 @@ public final class SemanticStringConverter {
             text = ss.getText();
         }
 
-        List<Sentence> sentences = new ArrayList<Sentence>();
-        List<Term> terms = new ArrayList<Term>();
+        List<Sentence> sentences = new ArrayList();
+        List<Term> terms = new ArrayList();
 
         int pos = 0;
         if (ss.getComplexConcepts() != null) {

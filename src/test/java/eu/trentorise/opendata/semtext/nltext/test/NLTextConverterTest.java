@@ -3,13 +3,11 @@ package eu.trentorise.opendata.semtext.nltext.test;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import eu.trentorise.opendata.commons.Dict;
 import eu.trentorise.opendata.commons.OdtConfig;
 import eu.trentorise.opendata.semtext.nltext.NLTextConverter;
-import eu.trentorise.opendata.semtext.nltext.UrlMapper;
+import eu.trentorise.opendata.disiclient.UrlMapper;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import it.unitn.disi.sweb.core.nlp.model.NLMeaning;
@@ -41,7 +39,6 @@ import it.unitn.disi.sweb.core.nlp.model.NLMultiWord;
 import it.unitn.disi.sweb.core.nlp.model.NLNamedEntity;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 import org.junit.After;
@@ -79,7 +76,7 @@ public class NLTextConverterTest {
 
     @Before
     public void beforeMethod() {
-        conv = NLTextConverter.of(UrlMapper.of("entities/", "concepts/"));
+        conv = NLTextConverter.of(UrlMapper.of());
     }
 
     @After
@@ -669,8 +666,7 @@ public class NLTextConverterTest {
     public void example() {
 
         NLTextConverter converter = NLTextConverter.of(
-                UrlMapper.of("http://mysite.org/entities/",
-                        "http://mysite.org/concepts/"));
+                UrlMapper.of("http://mysite.org"));
 
         String text = "hello world";
 

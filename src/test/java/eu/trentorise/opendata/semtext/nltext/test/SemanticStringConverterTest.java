@@ -17,7 +17,7 @@ package eu.trentorise.opendata.semtext.nltext.test;
 
 import eu.trentorise.opendata.commons.OdtConfig;
 import eu.trentorise.opendata.semtext.nltext.SemanticStringConverter;
-import eu.trentorise.opendata.semtext.nltext.UrlMapper;
+import eu.trentorise.opendata.disiclient.UrlMapper;
 import eu.trentorise.opendata.semtext.SemText;
 import it.unitn.disi.sweb.webapi.model.eb.sstring.SemanticString;
 import org.junit.BeforeClass;
@@ -42,8 +42,7 @@ public class SemanticStringConverterTest {
     @Test
     public void example() {
         SemanticStringConverter conv = SemanticStringConverter.of(
-                UrlMapper.of("http://mysite.org/entities/",
-                        "http://mysite.org/concepts/"));
+                UrlMapper.of("http://mysite.org"));
                 // when creating semtext, string ids will have these prefixes 
         // followed by the numerical ids of found in semantic strings
 
