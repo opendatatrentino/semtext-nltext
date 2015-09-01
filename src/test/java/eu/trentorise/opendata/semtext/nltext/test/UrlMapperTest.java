@@ -106,8 +106,10 @@ public class UrlMapperTest {
 
     @Test
     public void testEntity() {
-        assertEquals(1L, m.entityUrlToId(m.entityIdToUrl(1L)));
+        assertEquals(1L, m.entityUrlToId(m.entityIdToUrl(1L)));        
         assertEquals(-1L, m.entityUrlToId(m.entityIdToUrl(-1L)));
+        assertEquals(1L, m.entityNewUrlToId(m.entityNewIdToUrl(1L)));
+        assertEquals(-1L, m.entityNewUrlToId(m.entityNewIdToUrl(-1L)));
 
         try {
             m.entityIdToUrl(null);
@@ -116,6 +118,15 @@ public class UrlMapperTest {
         catch (IllegalArgumentException ex) {
 
         }
+        
+        try {
+            m.entityNewIdToUrl(null);
+            Assert.fail();
+        }
+        catch (IllegalArgumentException ex) {
+
+        }
+        
 
     }
 

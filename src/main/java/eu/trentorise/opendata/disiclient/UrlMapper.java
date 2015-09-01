@@ -206,6 +206,27 @@ public final class UrlMapper {
         return base + ENTITY_PREFIX + "/" + id;
     }
 
+    /**
+     *
+     * @throws IllegalArgumentException on unparseable URL
+     */
+    public long entityNewUrlToId(String url) {
+        return parseIdFromPrefix(ENTITY_PREFIX + "/new", url);
+    }
+
+    /**
+     * Returns the entity id as an url
+     *
+     * @param id if unknown use -1
+     */
+    // using Long as param instead of long because with the latter it might 
+    // be hard to interpret implicit cast failures.
+    public String entityNewIdToUrl(Long id) {
+        checkValidId(id, "Invalid entity id!");
+        return base + ENTITY_PREFIX + "/new/" + id;
+    }
+    
+    
     private void checkCongruent(long... ids) {
         boolean foundMinusOne = false;
         for (long id : ids) {
