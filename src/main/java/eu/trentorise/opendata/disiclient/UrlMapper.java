@@ -116,12 +116,6 @@ public final class UrlMapper {
         }
     }
 
-    /**
-     * @throws IllegalArgumentException on unparseable URL
-     */
-    public long urlToConceptId(String url) {
-        return parseIdFromPrefix(CONCEPT_PREFIX, url);
-    }
 
     /**
      * Extracts from multimap the first item correspond to {@code property}
@@ -138,21 +132,12 @@ public final class UrlMapper {
         }
     }
 
-    /**
-     * For an explanation of global vs local id, see {@link #conceptIdToUrl(java.lang.Long, java.lang.Long)
-     * }
-     *
-     * @see #conceptUrlToId(java.lang.String)
-     */
-    public long conceptUrlToGlobalId(String url) {
-        return parseIdFromParam(DEBUG_GLOBAL_CONCEPT_ID, url);
-    }
+    
 
     /**
      * For an explanation of global vs local id, see {@link #conceptIdToUrl(java.lang.Long, java.lang.Long)
      * }
-     *
-     * @see #conceptUrlToGlobalId(java.lang.String)
+     *    
      */
     public long conceptUrlToId(String url) {
         return parseIdFromPrefix(CONCEPT_PREFIX, url);
@@ -161,12 +146,12 @@ public final class UrlMapper {
     /**
      * Returns the etype id as an url.
      *
-     * @param etypeId if unknown use -1     
+     * @param etypeId if unknown use -1
      */
     // using Long as param instead of long because with the latter it might 
     // be hard to interpret implicit cast failures.
     public String etypeIdToUrl(Long etypeId) {
-        checkValidId(etypeId, "Invalid etype id!");        
+        checkValidId(etypeId, "Invalid etype id!");
         checkCongruent(etypeId);
         return base + ETYPE_PREFIX + "/" + etypeId;
     }
@@ -178,8 +163,6 @@ public final class UrlMapper {
     public long etypeUrlToId(String url) {
         return parseIdFromPrefix(ETYPE_PREFIX, url);
     }
-
-  
 
     private long parseIdFromParam(String paramName, String url) {
         Multimap<String, String> params = OdtUtils.parseUrlParams(url);
@@ -225,8 +208,7 @@ public final class UrlMapper {
         checkValidId(id, "Invalid entity id!");
         return base + ENTITY_PREFIX + "/new/" + id;
     }
-    
-    
+
     private void checkCongruent(long... ids) {
         boolean foundMinusOne = false;
         for (long id : ids) {
@@ -260,8 +242,20 @@ public final class UrlMapper {
     // using Long as param instead of long because with the latter it might 
     // be hard to interpret implicit cast failures.
     public String conceptIdToUrl(Long id) {
-        checkValidId(id, "Invalid concept id!");                
+        checkValidId(id, "Invalid concept id!");
         return base + CONCEPT_PREFIX + "/" + id;
+    }
+
+    /**
+     * For an explanation about ids, see {@link #attrDefIdToUrl(java.lang.Long, java.lang.Long)
+     * }
+     *
+     * @throws IllegalArgumentException on unparseable URL
+     *
+     * @see #attrDefUrlToId(java.lang.String)
+     */
+    public long attrDefUrlToConceptId(String url) {
+        return parseIdFromParam(DEBUG_CONCEPT_ID, url);
     }
 
     /**
@@ -293,18 +287,6 @@ public final class UrlMapper {
         return parseIdFromPrefix(ATTR_DEF_PREFIX, url);
     }
 
-    /**
-     * For an explanation about ids, see {@link #attrDefIdToUrl(java.lang.Long, java.lang.Long)
-     * }
-     *
-     * @throws IllegalArgumentException on unparseable URL
-     *
-     * @see #attrDefUrlToId(java.lang.String)
-     */
-    public long attrDefUrlToConceptId(String url) {
-        return parseIdFromParam(DEBUG_CONCEPT_ID, url);
-    }
-
     public boolean isEntityURL(String entityUrl) {
         checkNotEmpty(entityUrl, "Invalid url!");
         return entityUrl.contains(ENTITY_PREFIX);
@@ -315,7 +297,7 @@ public final class UrlMapper {
         return conceptUrl.contains(CONCEPT_PREFIX);
     }
 
-    public  boolean isEtypeUrl(String etypeUrl) {
+    public boolean isEtypeUrl(String etypeUrl) {
         checkNotEmpty(etypeUrl, "Invalid url!");
         return etypeUrl.contains(ETYPE_PREFIX);
     }

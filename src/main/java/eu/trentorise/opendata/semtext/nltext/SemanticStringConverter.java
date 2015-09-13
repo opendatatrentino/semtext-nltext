@@ -87,7 +87,7 @@ public final class SemanticStringConverter {
 
         if (MeaningKind.CONCEPT.equals(m.getKind())) {
             ConceptTerm concTerm = new ConceptTerm();
-            concTerm.setValue(urlMapper.urlToConceptId(m.getId()));
+            concTerm.setValue(urlMapper.conceptUrlToId(m.getId()));
 
             concTerm.setWeight(probability);
             concTerms.add(concTerm);
