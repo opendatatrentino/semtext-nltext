@@ -20,6 +20,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimap;
 import eu.trentorise.opendata.commons.OdtUtils;
 import static eu.trentorise.opendata.commons.validation.Preconditions.checkNotEmpty;
+import it.unitn.disi.sweb.webapi.model.kb.types.AttributeDefinition;
 import java.net.MalformedURLException;
 import java.net.URL;
 import javax.annotation.Nullable;
@@ -29,6 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * Todo shouldn't stay here!!
  * Simple prefix-based converter to/from numerical IDs and urls.
  *
  * @author David Leoni
@@ -258,6 +260,13 @@ public final class UrlMapper {
         return parseIdFromParam(DEBUG_CONCEPT_ID, url);
     }
 
+    /**
+     * @see #attrDefIdToUrl(java.lang.Long, java.lang.Long) 
+     */
+    public String attrDefToUrl(AttributeDefinition attrDef) {
+        return attrDefIdToUrl(attrDef.getId(), attrDef.getConceptId());
+    }
+    
     /**
      * Returns the attr def id as an url. Sometimes it may be useful to identify
      * attribute definitioins with their concepts, for this reason we force the
