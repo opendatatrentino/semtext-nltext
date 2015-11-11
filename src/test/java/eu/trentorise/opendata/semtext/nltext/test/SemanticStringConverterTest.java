@@ -15,7 +15,7 @@
  */
 package eu.trentorise.opendata.semtext.nltext.test;
 
-import eu.trentorise.opendata.commons.OdtConfig;
+import eu.trentorise.opendata.commons.TodConfig;
 import eu.trentorise.opendata.semtext.nltext.SemanticStringConverter;
 import eu.trentorise.opendata.disiclient.UrlMapper;
 import eu.trentorise.opendata.semtext.SemText;
@@ -35,7 +35,7 @@ public class SemanticStringConverterTest {
 
     @BeforeClass
     public static void beforeClass() {
-        OdtConfig.init(SemanticStringConverterTest.class);
+        TodConfig.init(SemanticStringConverterTest.class);
     }
 
 

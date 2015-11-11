@@ -15,7 +15,7 @@
  */
 package eu.trentorise.opendata.semtext.nltext.test;
 
-import eu.trentorise.opendata.commons.OdtConfig;
+import eu.trentorise.opendata.commons.TodConfig;
 import eu.trentorise.opendata.semtext.MeaningStatus;
 import eu.trentorise.opendata.semtext.SemText;
 import eu.trentorise.opendata.semtext.Term;
@@ -48,7 +48,7 @@ public class SemanticStringToSemTextTest {
 
     @BeforeClass
     public static void beforeClass() {
-        OdtConfig.init(SemanticStringToSemTextTest.class);
+        TodConfig.init(SemanticStringToSemTextTest.class);
     }
 
     @Before

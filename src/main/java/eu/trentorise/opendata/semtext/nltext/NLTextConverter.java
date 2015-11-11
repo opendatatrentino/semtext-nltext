@@ -7,7 +7,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import eu.trentorise.opendata.commons.Dict;
 import eu.trentorise.opendata.commons.NotFoundException;
-import eu.trentorise.opendata.commons.OdtUtils;
+import eu.trentorise.opendata.commons.TodUtils;
 import eu.trentorise.opendata.disiclient.UrlMapper;
 import it.unitn.disi.sweb.core.nlp.model.NLComplexToken;
 import it.unitn.disi.sweb.core.nlp.model.NLEntityMeaning;
@@ -158,7 +158,7 @@ public final class NLTextConverter {
             Dict.Builder dictb = Dict.builder();
 
             for (String key : glosses.keySet()) {
-                Locale loc = OdtUtils.languageTagToLocale(key);
+                Locale loc = TodUtils.languageTagToLocale(key);
                 String string = glosses.get(key);
                 if (string != null) {
                     dictb.put(loc, string);
@@ -550,7 +550,7 @@ public final class NLTextConverter {
             LOG.log(Level.WARNING, "Found null language in nltext {0}, setting Locale.ROOT", nltext.getText());
             locale = Locale.ROOT;
         } else {
-            locale = OdtUtils.languageTagToLocale(lang);
+            locale = TodUtils.languageTagToLocale(lang);
         }
 
         List<Sentence> sentences = new ArrayList<Sentence>();

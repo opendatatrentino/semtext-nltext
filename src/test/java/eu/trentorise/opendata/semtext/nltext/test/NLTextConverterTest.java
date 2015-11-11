@@ -5,7 +5,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import eu.trentorise.opendata.commons.Dict;
-import eu.trentorise.opendata.commons.OdtConfig;
+import eu.trentorise.opendata.commons.TodConfig;
 import eu.trentorise.opendata.semtext.nltext.NLTextConverter;
 import eu.trentorise.opendata.disiclient.UrlMapper;
 import static org.junit.Assert.assertEquals;
@@ -71,7 +71,7 @@ public class NLTextConverterTest {
 
     @BeforeClass
     public static void beforeClass() {
-        OdtConfig.init(NLTextConverterTest.class);
+        TodConfig.init(NLTextConverterTest.class);
     }
 
     @Before

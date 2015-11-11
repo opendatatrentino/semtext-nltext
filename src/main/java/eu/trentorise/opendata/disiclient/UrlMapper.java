@@ -18,7 +18,7 @@ package eu.trentorise.opendata.disiclient;
 import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimap;
-import eu.trentorise.opendata.commons.OdtUtils;
+import eu.trentorise.opendata.commons.TodUtils;
 import static eu.trentorise.opendata.commons.validation.Preconditions.checkNotEmpty;
 import it.unitn.disi.sweb.webapi.model.kb.types.AttributeDefinition;
 import java.net.MalformedURLException;
@@ -64,7 +64,7 @@ public final class UrlMapper {
     private UrlMapper(String base) {
         this();
         checkNotNull(base);
-        this.base = OdtUtils.removeTrailingSlash(base);
+        this.base = TodUtils.removeTrailingSlash(base);
     }
 
     /**
@@ -167,7 +167,7 @@ public final class UrlMapper {
     }
 
     private long parseIdFromParam(String paramName, String url) {
-        Multimap<String, String> params = OdtUtils.parseUrlParams(url);
+        Multimap<String, String> params = TodUtils.parseUrlParams(url);
         return parseId(getFirst(params, paramName));
     }
 

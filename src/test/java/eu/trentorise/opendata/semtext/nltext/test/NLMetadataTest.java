@@ -21,11 +21,11 @@ import com.fasterxml.jackson.databind.node.NullNode;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import eu.trentorise.opendata.commons.Dict;
-import eu.trentorise.opendata.commons.OdtConfig;
-import eu.trentorise.opendata.commons.test.jackson.OdtJacksonTester;
+import eu.trentorise.opendata.commons.TodConfig;
+import eu.trentorise.opendata.commons.test.jackson.TodJacksonTester;
 
-import static eu.trentorise.opendata.commons.test.jackson.OdtJacksonTester.changeField;
-import static eu.trentorise.opendata.commons.test.jackson.OdtJacksonTester.testJsonConv;
+import static eu.trentorise.opendata.commons.test.jackson.TodJacksonTester.changeField;
+import static eu.trentorise.opendata.commons.test.jackson.TodJacksonTester.testJsonConv;
 import eu.trentorise.opendata.semtext.Meaning;
 import eu.trentorise.opendata.semtext.MeaningKind;
 import eu.trentorise.opendata.semtext.MeaningStatus;
@@ -58,7 +58,7 @@ public class NLMetadataTest {
 
     @BeforeClass
     public static void beforeClass() {
-        OdtConfig.init(NLMetadataTest.class);
+        TodConfig.init(NLMetadataTest.class);
     }
 
     ObjectMapper objectMapper;
