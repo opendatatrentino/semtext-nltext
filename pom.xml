@@ -22,7 +22,7 @@
 
     <groupId>eu.trentorise.opendata.semtext</groupId>
     <artifactId>semtext-nltext</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>SemText NlText</name>
@@ -30,7 +30,7 @@
     <description>Converters to/from NLText/Semtext/SemanticString </description>
     
     <parent>
-        <groupId>eu.trentorise.opendata.commons</groupId>
+        <groupId>eu.trentorise.opendata</groupId>
         <artifactId>tod-super-pom</artifactId>
         <version>1.4.0-SNAPSHOT</version>
     </parent>
@@ -195,7 +195,7 @@
         </dependency>               
         
         <dependency>
-            <groupId>eu.trentorise.opendata.commons</groupId>
+            <groupId>eu.trentorise.opendata</groupId>
             <artifactId>tod-commons-jackson</artifactId>
             <scope>test</scope>
             <type>test-jar</type>                 
