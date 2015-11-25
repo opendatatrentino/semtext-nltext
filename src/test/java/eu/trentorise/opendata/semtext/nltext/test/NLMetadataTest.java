@@ -208,23 +208,27 @@ public class NLMetadataTest {
                 ImmutableList.of("myderived lemma 1", "myderived lemma 2"));
         String text = "Town of Arco";
 
-        Meaning selectedMeaning = Meaning.of(
-                "123",
-                MeaningKind.ENTITY,
-                0.2,
-                Dict.builder().put(Locale.ITALIAN, "Comune di Arco")
-                .put(Locale.ENGLISH, "Arco town").build(),
-                Dict.of(Locale.ENGLISH, "A beatiful town in Trentino"),
-                ImmutableMap.of("nltext", NLMeaningMetadata.of("my lemma", "my summary")));
+        Meaning selectedMeaning = Meaning.builder()
+                .setId("123")
+                .setKind(MeaningKind.ENTITY)
+                .setProbability(0.2)
+                .setName(Dict.builder().put(Locale.ITALIAN, "Comune di Arco")
+                        .put(Locale.ENGLISH, "Arco town").build())
+                .setDescription(Dict.of(Locale.ENGLISH, "A beatiful town in Trentino"))
+                .setMetadata(
+                        ImmutableMap.of(
+                                "nltext", 
+                                NLMeaningMetadata.of("my lemma", "my summary"))).build();
 
-        Meaning otherMeaning = Meaning.of(
-                "123",
-                MeaningKind.CONCEPT,
-                0.2,
-                Dict.builder().put(Locale.ITALIAN, "arco")
-                .put(Locale.ENGLISH, "bow").build(),
-                Dict.of(Locale.ENGLISH, "a weapon to be used with arrows"),
-                ImmutableMap.of("nltext", NLMeaningMetadata.of("my lemma", "my summary")));
+        Meaning otherMeaning = Meaning.builder()
+                .setId("123")
+                .setKind(MeaningKind.CONCEPT)
+                .setProbability(0.2)
+                .setName(Dict.builder().put(Locale.ITALIAN, "arco").put(Locale.ENGLISH, "bow").build())
+                .setDescription(Dict.of(Locale.ENGLISH, "a weapon to be used with arrows"))
+                
+                .setMetadata(ImmutableMap.of("nltext", NLMeaningMetadata.of("my lemma", "my summary")))
+                .build();
 
         Term term = Term.of(
                 8,

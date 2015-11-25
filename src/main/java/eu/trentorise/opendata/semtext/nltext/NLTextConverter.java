@@ -6,7 +6,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import eu.trentorise.opendata.commons.Dict;
-import eu.trentorise.opendata.commons.NotFoundException;
 import eu.trentorise.opendata.commons.TodUtils;
 import eu.trentorise.opendata.disiclient.UrlMapper;
 import it.unitn.disi.sweb.core.nlp.model.NLComplexToken;
@@ -36,6 +35,8 @@ import eu.trentorise.opendata.semtext.Meaning;
 import eu.trentorise.opendata.semtext.SemText;
 import eu.trentorise.opendata.semtext.Sentence;
 import eu.trentorise.opendata.semtext.Term;
+import eu.trentorise.opendata.semtext.exceptions.SemTextNotFoundException;
+
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -334,12 +335,12 @@ public final class NLTextConverter {
 
     /**
      *
-     * @throws NotFoundException if the sentence start offset is missing
+     * @throws SemTextNotFoundException if the sentence start offset is missing
      */
     private static int sentenceStartOffset(NLToken token) {
         Integer so = (Integer) token.getProp(NLTextUnit.PFX, SENTENCE_START_OFFSET);
         if (so == null) {
-            throw new NotFoundException(SENTENCE_START_OFFSET + " is null in NLToken " + token);
+            throw new SemTextNotFoundException(SENTENCE_START_OFFSET + " is null in NLToken " + token);
         }
 
         return so;
@@ -347,12 +348,12 @@ public final class NLTextConverter {
 
     /**
      *
-     * @throws NotFoundException if the sentence end offset is missing
+     * @throws SemTextNotFoundException if the sentence end offset is missing
      */
     private static int sentenceEndOffset(NLToken token) {
         Integer so = (Integer) token.getProp(NLTextUnit.PFX, SENTENCE_END_OFFSET);
         if (so == null) {
-            throw new NotFoundException(SENTENCE_END_OFFSET + " is null in NLToken " + token);
+            throw new SemTextNotFoundException(SENTENCE_END_OFFSET + " is null in NLToken " + token);
         }
 
         return so;
@@ -360,24 +361,24 @@ public final class NLTextConverter {
 
     /**
      *
-     * @throws NotFoundException if the start offset is missing
+     * @throws SemTextNotFoundException if the start offset is missing
      */
     private static int getStartOffset(NLSentence sentence) {
         Integer so = (Integer) sentence.getProp(NLTextUnit.PFX, START_OFFSET);
         if (so == null) {
-            throw new NotFoundException(START_OFFSET + " is null in NLSentence " + sentence);
+            throw new SemTextNotFoundException(START_OFFSET + " is null in NLSentence " + sentence);
         }
         return so;
     }
 
     /**
      *
-     * @throws NotFoundException if the start offset is missing
+     * @throws SemTextNotFoundException if the start offset is missing
      */
     private static int getEndOffset(NLSentence sentence) {
         Integer so = (Integer) sentence.getProp(NLTextUnit.PFX, END_OFFSET);
         if (so == null) {
-            throw new NotFoundException(END_OFFSET + " is null in NLSentence " + sentence);
+            throw new SemTextNotFoundException(END_OFFSET + " is null in NLSentence " + sentence);
         }
         return so;
     }
@@ -646,7 +647,14 @@ public final class NLTextConverter {
                     stringToString(nlMeaning.getLemma(), "invalid lemma in NLMeaning"),
                     stringToString(nlMeaning.getSummary(), "invalid summary in NLMeaning"));
 
-            return Meaning.of(url, kind, nlMeaning.getProbability(), name, description, ImmutableMap.of(NLTEXT_NAMESPACE, metadata));
+            return Meaning.builder()
+                    .setId(url)
+                    .setKind(kind)
+                    .setProbability(nlMeaning.getProbability())
+                    .setName(name)
+                    .setDescription(description)
+                    .setMetadata(ImmutableMap.of(NLTEXT_NAMESPACE, metadata))
+                     .build();
         }
         catch (Exception ex) {
             LOG.log(Level.SEVERE, "Error while converting NLMeaning to SemText meaning, returning empty Meaning.of()", ex);
@@ -802,13 +810,11 @@ public final class NLTextConverter {
             if (selectedMeaning == null
                     && MeaningKind.UNKNOWN != kind) {
                 NLMeaningMetadata metadata = NLMeaningMetadata.of("", "");
-                sortedMeanings.add(Meaning.of(
-                        "",
-                        kind,
-                        1.0,
-                        Dict.of(),
-                        Dict.of(),
-                        ImmutableMap.of(NLTEXT_NAMESPACE, metadata)));
+                sortedMeanings.add(Meaning.builder()
+                        .setKind(kind)
+                        .setProbability(1.0)
+                        .setMetadata(ImmutableMap.of(NLTEXT_NAMESPACE, metadata))
+                        .build());
             }
         }
 

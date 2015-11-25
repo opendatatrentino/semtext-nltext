@@ -201,12 +201,7 @@
             <type>test-jar</type>                 
         </dependency>
         
-        <dependency>
-            <groupId>eu.trentorise.opendata.semtext</groupId>
-            <artifactId>semtext-jackson</artifactId>            
-            <scope>test</scope>            
-        </dependency>        
-        
+     
     </dependencies>
     
     
